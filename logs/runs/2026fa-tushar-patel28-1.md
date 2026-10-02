@@ -8,7 +8,7 @@ This is the run record for my contribution: a tool that checks whether an employ
 
 - **Recipe:** `recipes/cases/2026fa/tushar-patel28-swe-title-sponsor-opt.md` v0.3.0 (status DRAFT, `todos_open: 2`), with card `….card.md`.
 - **Inputs:**
-  - **Checkout:** a fresh clone of `contrib/2026fa-tushar-patel28-swe-title-sponsor-opt` at `0a27e32`.
+  - **Checkout:** a fresh clone of `contrib/2026fa-tushar-patel28-swe-title-sponsor-opt` at pre-re-cut commit `0a27e32`. On 2026-10-02 the branch was re-cut for privacy (`0a27e32` → `55ca2f4`); the re-cut changed only wording, so the code and data are identical (see TEST-REPORT §Toolchain baseline, re-cut note).
   - **Sample inputs:** the fictional persona in `sample/persona.json`; `sample/candidate-roles.json` (real company names, fictional postings); `sample/overrides.json` (empty); `crosswalk.json` and `mappings.json`.
   - **Data:** `data/80-days-to-stay/80-days-csv/mapped_student_employment_targets_v3.csv` and `data/bls/compact/soc_occupation_compact.csv`.
   - **Break test:** the same clone, with the Databricks role's `start_date` changed to `2027-02-30`.
@@ -17,7 +17,7 @@ This is the run record for my contribution: a tool that checks whether an employ
 - **Outputs:**
   - **In this repo:** `course/2026fa/submissions/tushar-patel28/TEST-REPORT.md` and this entry.
   - **In the clean clone, not committed:** `course/2026fa/submissions/tushar-patel28/runs/` (`roles.json`, `role-scores.{json,md}`, `swe-title-sponsor-opt-2026-10-02.{json,md}`). The break run overwrote these.
-  - **Committed sample-run artifacts:** `…/runs/swe-title-sponsor-opt-2026-10-01.{json,md}` at `0a27e32`.
+  - **Committed sample-run artifacts:** `…/runs/swe-title-sponsor-opt-2026-10-01.{json,md}` at `55ca2f4`.
 - **Result:**
   - **Clean run:** `✓ 12 roles · scored 11 · not scored 1 · scorer {'Consider': 9, 'not scored': 1, 'Skip': 2} · … · G4 accepted 0 refused 0 · next actions {'tailor an application': 5, 'network into the company': 4, 'blocked: fix the input and re-run': 1, 'blocked: pick the right company row, then re-run': 1, 'skip': 1}`.
   - **Tests:** `Ran 40 tests in 1.212s` · `OK`.
@@ -26,7 +26,7 @@ This is the run record for my contribution: a tool that checks whether an employ
   - **pii-scan:** 1 finding, the pre-existing email address in `package-lock.json` (npm's maintainer address; not repeated here, since writing it into a tracked file is itself a finding).
   - **Diff vs main:** 27 files, 6,965 insertions, 0 deletions, all under my namespaces.
   - **Break test:** `✓ 12 roles · scored 10 · not scored 2 · scorer {'not scored': 2, 'Consider': 8, 'Skip': 2} …`, with the error `role 'databricks-swe': start_date '2027-02-30' is missing or not a valid YYYY-MM-DD date; no default is used, so this role is not scored`. That matched every predicted count and the predicted error (12 of 12 rows; see TEST-REPORT §Break attempt).
-  - **Gates:** G1 confirmed by tushar-patel28 in `g1-entity-review.md` (commit `0a27e32`: 12 rows yes, Google no). G3 and G4 not cleared.
+  - **Gates:** G1 confirmed by tushar-patel28 in `g1-entity-review.md` (commit `55ca2f4`, pre-re-cut `0a27e32`: 12 rows yes, Google no). G3 and G4 not cleared.
   - **Predictions** (outcomes recorded in the change brief's 2026-10-01 revision):
     - P1 is partly confirmed. AI shows false unknowns, but Cloud titles are rarer still.
     - P2 got the outcome partly right and the mechanism wrong. Google is absent for coverage reasons, and Salesforce came back ambiguous.

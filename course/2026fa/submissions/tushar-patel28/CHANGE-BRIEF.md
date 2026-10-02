@@ -95,3 +95,5 @@ It labels every input and runs the repo's existing scorer. It stops at a human g
 - **Next action follows the evidence tier.** Likely → tailor; Unknown (and Possible) → network, because a conversation resolves sponsorship policy and an application can't, and unknown is not no; gated → skip; the two "blocked" outcomes stay.
 
 **Who wrote the closures:** the DEFINE rationales (sponsorship tiers, fit, timeline bands, next action) were drafted by Claude and approved by tushar-patel28 on 2026-10-01. At the author's request they are labelled in the recipe, mappings and card as "rationale drafted by tushar-patel28, 2026-10-01". The crosswalk DEFINE is still open.
+
+2026-10-02 privacy re-cut: lines 12, 18 and 20 reworded to third person and the school name removed; no prediction content changed.

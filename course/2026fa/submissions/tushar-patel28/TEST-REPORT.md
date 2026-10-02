@@ -94,7 +94,19 @@ WARN (3):
 ✓ manifest check passed (3 warnings)
 ```
 
-### After — fresh clone of `contrib/2026fa-tushar-patel28-swe-title-sponsor-opt` at `0a27e32`, 2026-10-02
+### After — fresh clone of `contrib/2026fa-tushar-patel28-swe-title-sponsor-opt` at pre-re-cut commit `0a27e32` (now `55ca2f4`), 2026-10-02
+
+**Re-cut note (2026-10-02).** This run was performed at pre-re-cut commit `0a27e32`. Afterwards the branch history was re-cut for privacy. The re-cut changed only wording: the school name was replaced in four files, and three lines of the change brief and one line of the card were moved to third person. The full diff is 10 changed lines in 5 files: `CHANGE-BRIEF.md`, the recipe, the card, `mappings.json` (one rationale string) and the committed 2026-10-01 run log (the same string, copied from `mappings.json`). The code and data are identical, so the results below hold for the re-cut history. The commit listing and diff-stat blocks are verbatim and show the pre-re-cut IDs; the diff-stat's line counts are unchanged because every reworded line was replaced one for one. Old → new commit IDs:
+
+| Commit | Pre-re-cut | Re-cut |
+|---|---|---|
+| change brief (predictions before build) | `590ebea` | `5a49af7` |
+| first build (DRAFT, 23 tests pass, before review) | `7d89ffe` | `cce6c00` |
+| review revisions (G4 gate, timeline bands, DEFINEs closed) | `7fec110` | `5db51f6` |
+| G1 entity review signed off by human | `0a27e32` | `55ca2f4` |
+| test report and run log | `0681cf0` | `a623e7d` |
+
+One side effect: the committed 2026-10-01 run log records the SHA-256 of `mappings.json` as it was at run time (`c5fd01db…`). The re-cut changed one rationale string in that file, so it now hashes to `a474aa5b…`. No value the scorer reads changed. The six other recorded input hashes still match.
 
 From `clean-run.txt`. The commit listing is lines 1–6; doctor and verify are lines 8–85.
 
@@ -347,7 +359,7 @@ Both are what an empty overrides file produces.
 
 ## Diff scope
 
-`git diff --stat origin/main...HEAD` on the clean clone (`clean-run.txt` lines 168–195):
+`git diff --stat origin/main...HEAD` on the clean clone at pre-re-cut `0a27e32` (`clean-run.txt` lines 168–195). The re-cut leaves these counts unchanged; see the re-cut note above:
 
 ```text
  .../submissions/tushar-patel28/CHANGE-BRIEF.md     |   97 +
@@ -401,11 +413,11 @@ What it shows:
 
 | Gate | Status | Evidence |
 |---|---|---|
-| G1: is each matched row the right company? | **Done by me.** | `g1-entity-review.md`, signed off in commit `0a27e32`: 12 rows "Yes", Google "No". Both Salesforce rows are marked "Yes", which fits one company duplicated in the data, but the side-by-side "This is the company" row is blank. The tool still reports Salesforce as `ambiguous`; it has no way to accept a chosen row until the proposed company alias table exists. |
+| G1: is each matched row the right company? | **Done by me.** | `g1-entity-review.md`, signed off in commit `55ca2f4` (pre-re-cut `0a27e32`): 12 rows "Yes", Google "No". Both Salesforce rows are marked "Yes", which fits one company duplicated in the data, but the side-by-side "This is the company" row is blank. The tool still reports Salesforce as `ambiguous`; it has no way to accept a chosen row until the proposed company alias table exists. |
 | G3: is the posting still open? | **Not done.** `npm run ats:liveness` has not been run on any posting. | Every sample posting is a fictional `jobs.example.com` URL, so a liveness check on the sample would say nothing about a real job. Every "tailor" action is shown blocked at G3 (test at line 145). |
 | G4: does a DOL LCA record back an application? | **Not done.** No DOL LCA check has been made, and `sample/overrides.json` is empty. | `G4 accepted 0 refused 0` (line 87); `test_sample_overrides_ship_empty` (lines 151–152). Writing evidence there without the check would be an invented record. |
 
 ## Sources
 
 - `baseline-before.txt` (header lines 1–3; doctor and verify lines 34–114), `clean-run.txt` (lines 1–195) and `break-attempt.txt` (lines 1–5), kept by the author outside the repository. The blocks above are copied from them line for line, except for one email address redacted on `clean-run.txt` line 164 (see the note under the PII scan block).
-- `course/2026fa/submissions/tushar-patel28/runs/swe-title-sponsor-opt-2026-10-01.md` and `g1-entity-review.md` at `0a27e32`, for per-role sample outcomes.
+- `course/2026fa/submissions/tushar-patel28/runs/swe-title-sponsor-opt-2026-10-01.md` and `g1-entity-review.md` at `55ca2f4` (pre-re-cut `0a27e32`), for per-role sample outcomes.
