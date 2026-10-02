@@ -18,19 +18,19 @@
 
 | Role | Company as typed `[your-input]` | G1 result `[record]` | CSV row | Company name `[record]` | City `[record]` | State `[record]` | Website `[record]` | Confirmed by human (yes/no) |
 |---|---|---|---|---|---|---|---|---|
-| databricks-swe | Databricks, Inc. | matched-h1b | 7249 | DATABRICKS INC | SAN FRANCISCO | CA | databricks.com | |
-| stripe-swe | Stripe, Inc. | matched-h1b | 25633 | STRIPE INC | South San Francisco | CA | stripe.com | |
-| toast-swe | Toast, Inc. | matched-h1b | 27011 | TOAST INC | BOSTON | MA | toast.com | |
-| google-swe | Google | not-found | — | no row with this name | — | — | — | |
-| mongodb-swe | MongoDB, Inc. | matched-h1b | 17197 | MONGODB INC | NEW YORK | NY | mongodb.com | |
-| aiera-ai | Aiera, Inc. | matched-h1b | 972 | AIERA INC | NEW YORK | NY | aiera.com | |
-| anyscale-ai | Anyscale, Inc. | matched-h1b | 1808 | ANYSCALE INC | San Francisco | CA | anyscale.com | |
-| huggingface-ai | Hugging Face, Inc. | no-h1b-trace | 12615 | HUGGING FACE INC | BROOKLYN | NY | hugging-face.com | |
-| datadog-cloud | Datadog, Inc. | matched-h1b | 7258 | DATADOG INC | NEW YORK | NY | datadog.com | |
-| everquote-cloud | EverQuote, Inc. | matched-h1b | 9170 | EVERQUOTE INC | CAMBRIDGE | MA | everquote.com | |
-| salesforce-cloud | Salesforce.com, Inc. | ambiguous | 23115 | SALESFORCE COM INC | SAN FRANCISCO | CA | salesforcecom.com | |
-| salesforce-cloud | Salesforce.com, Inc. | ambiguous | 23116 | SALESFORCECOM INC | SAN FRANCISCO | CA | salesforcecom.com | |
-| coherehealth-cloud | Cohere Health, Inc. | matched-h1b | 6084 | COHERE HEALTH INC | BOSTON | MA | cohere-health.com | |
+| databricks-swe | Databricks, Inc. | matched-h1b | 7249 | DATABRICKS INC | SAN FRANCISCO | CA | databricks.com | Yes |
+| stripe-swe | Stripe, Inc. | matched-h1b | 25633 | STRIPE INC | South San Francisco | CA | stripe.com | Yes |
+| toast-swe | Toast, Inc. | matched-h1b | 27011 | TOAST INC | BOSTON | MA | toast.com | Yes |
+| google-swe | Google | not-found | — | no row with this name | — | — | — | No |
+| mongodb-swe | MongoDB, Inc. | matched-h1b | 17197 | MONGODB INC | NEW YORK | NY | mongodb.com | Yes |
+| aiera-ai | Aiera, Inc. | matched-h1b | 972 | AIERA INC | NEW YORK | NY | aiera.com | Yes |
+| anyscale-ai | Anyscale, Inc. | matched-h1b | 1808 | ANYSCALE INC | San Francisco | CA | anyscale.com | Yes |
+| huggingface-ai | Hugging Face, Inc. | no-h1b-trace | 12615 | HUGGING FACE INC | BROOKLYN | NY | hugging-face.com | Yes |
+| datadog-cloud | Datadog, Inc. | matched-h1b | 7258 | DATADOG INC | NEW YORK | NY | datadog.com | Yes |
+| everquote-cloud | EverQuote, Inc. | matched-h1b | 9170 | EVERQUOTE INC | CAMBRIDGE | MA | everquote.com | Yes |
+| salesforce-cloud | Salesforce.com, Inc. | ambiguous | 23115 | SALESFORCE COM INC | SAN FRANCISCO | CA | salesforcecom.com | Yes |
+| salesforce-cloud | Salesforce.com, Inc. | ambiguous | 23116 | SALESFORCECOM INC | SAN FRANCISCO | CA | salesforcecom.com | Yes |
+| coherehealth-cloud | Cohere Health, Inc. | matched-h1b | 6084 | COHERE HEALTH INC | BOSTON | MA | cohere-health.com | Yes |
 
 Notes for the not-found and no-trace rows:
 - **Google:** no CSV row starts with "GOOGLE". The dataset is built from startup funding filings; "ALPHABET INC" exists but has no H-1B trace. A "no" here means "not in this data", not "does not sponsor".
