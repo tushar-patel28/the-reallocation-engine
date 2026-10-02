@@ -95,15 +95,20 @@
         "source": "your-input",
         "sha256": "ee13467af470e0a3c677405783438c80529e7e19135c4f6968687edc2911ea89"
       },
+      "overrides": {
+        "value": "scripts/contrib/2026fa/tushar-patel28-swe-title-sponsor-opt/sample/overrides.json",
+        "source": "your-input",
+        "sha256": "6c8f8f8f69073a3725a2f4c2d3b5fbdde74cf0de16370666c88af8bf6d26a57d"
+      },
       "crosswalk": {
         "value": "scripts/contrib/2026fa/tushar-patel28-swe-title-sponsor-opt/crosswalk.json",
         "source": "your-input",
-        "sha256": "c6e1435200f1b34170dfb68c40a7fee359202720897105ea9820f633708cc7df"
+        "sha256": "0ec0579f29dc4545cb5241921b12aa32946a33edff509a52cc0856d075dd29ad"
       },
       "mappings": {
         "value": "scripts/contrib/2026fa/tushar-patel28-swe-title-sponsor-opt/mappings.json",
         "source": "your-input",
-        "sha256": "4a3e7043539bb123c29296c81019460019e5790441decc466cee13d1bb273450"
+        "sha256": "c5fd01db96fa8a7243e181a5e4e90df5e94f8da613ad79ec108f80a61dcf3bad"
       }
     },
     "maintained_code_reused": {
@@ -119,21 +124,44 @@
     "crosswalk": {
       "value": {
         "_label": "your-input",
-        "_status": "[TODO: DEFINE] in the recipe \u2014 proposed by Claude on 2026-10-01, not yet closed by the human",
+        "_status": "CLOSED DEFINE \u2014 rationale drafted by tushar-patel28, 2026-10-01",
         "_what": "Keyword crosswalk from sponsored job titles to three role families. The sponsorship data has no SOC field, so this file IS the definition of 'a title in this family'. It is not a record.",
-        "_match_rule": "A title belongs to a family when any of the family's regex patterns matches it (case-insensitive, Python re.search). A title can belong to more than one family. A title that matches no pattern belongs to no family (e.g. a bare 'Senior Engineer').",
-        "_context_soc_codes": "SOC codes per family are used ONLY to look up BLS median wages as report context. They are not used to match titles and do not enter the score.",
+        "_rationale": [
+          "Precision over recall. A keyword only maps a title to a family when the title clearly belongs there.",
+          "Ambiguous titles map to no family \u2014 e.g. Data Engineer, Solutions Architect, bare 'Engineer'. These count as 'not in top titles (unknown)'.",
+          "A match is a title match only. It verifies nothing about the visa's job category (SOC).",
+          "Known limitation: AI roles filed as 'Software Engineer' are invisible (prediction P1)."
+        ],
+        "_match_rule": "A title belongs to a family when it matches NO exclude_patterns entry AND at least one of the family's patterns (case-insensitive, Python re.search). A title can belong to more than one family (e.g. 'Software Engineer, Machine Learning' is SWE and AI).",
+        "_changes_2026-10-01": {
+          "added": "exclude_patterns: manager/director/exec titles, sales/support/success, product/program/project, QA/test, analyst, design, team lead, and the two ambiguous examples named in the rationale (data engineer; solutions architect/engineer)",
+          "SWE": "'software engineer' now ends at a word boundary (no 'Software Engineering Manager'); back-end/front-end/full-stack/mobile now require engineer|developer (one word may sit between, e.g. 'Full Stack Java Developer'); 'member of technical staff' REMOVED (MTS covers research, ML and hardware roles); 'application developer' widened to 'applications? developer'; added '<engineer|developer> - back-end|front-end|full-stack' (e.g. 'Staff Engineer (Full Stack)')",
+          "AI": "bare 'machine learning', 'ml', 'ai', 'artificial intelligence', 'deep learning', 'nlp', 'computer vision' now require engineer|scientist|researcher (one qualifier word allowed, e.g. 'Machine Learning Software Engineer', 'Computer Vision Research Engineer'); 'applied scientist', 'research scientist' and 'data scientist' REMOVED (wet-lab, analytics and actuarial roles share these titles); added 'ai/ml|ai/ds engineer' and '<engineer> \u2026 machine learning|ml|ai' within 25 characters",
+          "Cloud": "bare 'cloud', 'devops', 'infrastructure', 'site reliability', 'kubernetes' now require a role noun; bare 'reliability engineer' REMOVED (hardware/manufacturing reliability) \u2014 only site/systems/database reliability engineer remain; added '<engineer> \u2026 cloud|infrastructure|devops' within 25 characters"
+        },
+        "_context_soc_codes": "SOC codes per family are used ONLY to look up BLS median wages as report context. They are not used to match titles and do not enter the score. 15-2051 (Data Scientists) stays in the AI wage context as the AI-adjacent code named in the brief, even though 'data scientist' titles no longer map to the AI family.",
+        "exclude_patterns": [
+          "\\b(manager|director|head of|vp|avp|vice president|chief|president|officer)\\b",
+          "\\b(sales|presales|pre-sales|account|marketing|recruit\\w*|success|support)\\b",
+          "\\b(product|program|project)\\b",
+          "\\b(qa|quality|test|tester|testing|sdet)\\b",
+          "\\banalyst\\b",
+          "\\b(design|designer)\\b",
+          "\\bteam lead\\b",
+          "\\bdata engineer\\b",
+          "\\bsolutions? (architect|engineer)\\b"
+        ],
         "families": {
           "SWE": {
             "patterns": [
-              "\\bsoftware (development )?engineer",
-              "\\bsoftware developer",
-              "\\bback[- ]?end\\b",
-              "\\bfront[- ]?end\\b",
-              "\\bfull[- ]?stack\\b",
-              "\\bmobile engineer",
-              "\\bapplication developer",
-              "\\bmember of technical staff\\b",
+              "\\bsoftware (development )?engineer\\b",
+              "\\bsoftware developer\\b",
+              "\\bback[- ]?end( \\w+)? (engineer|developer)\\b",
+              "\\bfront[- ]?end( \\w+)? (engineer|developer)\\b",
+              "\\bfull[- ]?stack( \\w+)? (engineer|developer)\\b",
+              "\\bmobile( \\w+)? (engineer|developer)\\b",
+              "\\b(engineer|developer)\\b[ ,/(\u2013-]+(back[- ]?end|front[- ]?end|full[- ]?stack)\\b",
+              "\\bapplications? developer\\b",
               "\\bsde\\b"
             ],
             "context_soc_codes": [
@@ -142,16 +170,14 @@
           },
           "AI": {
             "patterns": [
-              "\\bmachine learning\\b",
-              "\\bml\\b",
-              "\\bai\\b",
-              "\\bartificial intelligence\\b",
-              "\\bdeep learning\\b",
-              "\\bapplied scientist\\b",
-              "\\bresearch scientist\\b",
-              "\\bnlp\\b",
-              "\\bcomputer vision\\b",
-              "\\bdata scientist\\b"
+              "\\bmachine learning( \\w+)? (engineer|scientist|researcher)\\b",
+              "\\bml( \\w+)? (engineer|scientist|researcher)\\b",
+              "\\bai( \\w+)? (engineer|scientist|researcher)\\b",
+              "\\bai/(ml|ds) (engineer|scientist)\\b",
+              "\\bdeep learning( \\w+)? (engineer|scientist|researcher)\\b",
+              "\\bcomputer vision( \\w+)? (engineer|scientist|researcher)\\b",
+              "\\bnlp( \\w+)? (engineer|scientist|researcher)\\b",
+              "\\bengineer\\b.{0,25}?\\b(machine learning|ml|ai)\\b"
             ],
             "context_soc_codes": [
               "15-1221.00",
@@ -160,16 +186,16 @@
           },
           "Cloud": {
             "patterns": [
-              "\\bcloud\\b",
-              "\\bdevops\\b",
-              "\\bsite reliability\\b",
+              "\\bcloud( \\w+)? (engineer|architect|developer)\\b",
+              "\\bdevops( \\w+)? (engineer|architect)\\b",
+              "\\b(site|systems|database) reliability engineer\\b",
               "\\bsre\\b",
-              "\\binfrastructure\\b",
-              "\\bplatform engineer",
-              "\\breliability engineer",
-              "\\bnetwork engineer",
+              "\\binfrastructure (software )?engineer\\b",
+              "\\bengineer\\b.{0,25}?\\b(cloud|infrastructure|devops)\\b",
+              "\\bplatform engineer\\b",
+              "\\bnetwork engineer\\b",
               "\\bsystems administrator\\b",
-              "\\bkubernetes\\b"
+              "\\bkubernetes (engineer|administrator)\\b"
             ],
             "context_soc_codes": [
               "15-1241.00",
@@ -184,85 +210,121 @@
     "mappings": {
       "value": {
         "_label": "your-input",
-        "_status": "Every block below is a [TODO: DEFINE] in the recipe. Values were proposed by Claude (2026-10-01) except timeline.bands, which the human supplied in the build request. None is a record.",
+        "_status": "sponsorship, fit, timeline and next_action are CLOSED DEFINEs (rationale drafted by tushar-patel28, 2026-10-01). liveness is an assumption of the offline prototype; g4 is the human gate's contract. None of these values is a record.",
         "sponsorship": {
-          "_why": "Evidence state (G1 status x family check) -> scorer tier and p. Tier names are the ones role-scorer.mjs reads: soft_sponsorship_tiers = likely/possible/unknown; data/examples/ch11-roles.json uses Proven/Likely/None. Proven is NOT reachable: Ch.7 defines Proven as 'strong, recent filing history and high approval', and the CSV has no filing-year field and approval counts that may be double-counted. Unknown never becomes Avoid/None: the upstream README says an empty sponsorship field does not mean the company does not sponsor.",
+          "_closure": "rationale drafted by tushar-patel28, 2026-10-01",
+          "_why": "Evidence state (G1 status x family check) -> scorer tier and p. Tier names are the ones role-scorer.mjs reads (soft_sponsorship_tiers = likely/possible/unknown). These p values mostly set an ORDERING (Likely > Possible > Unknown), not a measured probability.",
           "matched-h1b+in-top-titles": {
             "tier": "Likely",
             "p": 0.6,
-            "why": "company has an H-1B trace AND a title in my family is in its top sponsored titles; 0.6 is the Likely value used in data/examples/ch11-roles.json"
+            "why": "A positive record in my family, but no filing year, no SOC, and possibly doubled counts. This is past practice, not current intent, so it stays below Proven."
           },
           "matched-h1b+not-in-top-titles": {
             "tier": "Possible",
             "p": 0.4,
-            "why": "company has an H-1B trace but my family is not in the short top-titles list (unknown, not absent); 0.4 is a proposal placed below Likely \u2014 no record produced it"
+            "why": "The company sponsors, but my family isn't visible in a short top-titles list. Existing sponsorship setup puts it above zero; nothing ties it to my role, so it stays below 0.5. An ordering, not a measured probability."
           },
           "matched-h1b+titles-unreadable": {
             "tier": "Possible",
             "p": 0.4,
-            "why": "company has an H-1B trace but the title list could not be parsed, so no family claim is made; same proposal as above"
+            "why": "Same as above: the company sponsors, and no family claim can be read from its titles."
           },
           "no-h1b-trace": {
             "tier": "Unknown",
             "p": null,
-            "why": "no sponsorship evidence either way -> no sponsorship vote is sent (the scorer skips a vote whose p is null)"
+            "why": "No sponsorship evidence either way -> no sponsorship vote (unknown is not no; p=0 would assert non-sponsorship)."
           },
           "not-found": {
             "tier": "Unknown",
             "p": null,
-            "why": "company name did not match the data; may be a name-match artifact -> no vote"
+            "why": "Company name did not match the data; may be a coverage or name-match gap -> no vote."
           },
           "ambiguous": {
             "tier": "Unknown",
             "p": null,
-            "why": "more than one row matches; picking one would be a guess -> no vote until a human resolves it"
+            "why": "More than one row matches; picking one would be a guess -> no vote until a human resolves it."
           }
         },
         "fit": {
-          "_why": "My priority order SWE > AI > Cloud, encoded as equal 0.1 steps. The top value is 0.8, not 1.0, because a family preference says nothing about how well I fit a specific posting. This is a preference, not a model judgment of fit.",
+          "_closure": "rationale drafted by tushar-patel28, 2026-10-01",
+          "_why": "My priority list is a ranking, so equal steps are the least-assumption encoding. The top is below 1.0 because fit is my own statement, not a verified skills match. The floor is 0.6 because I'd accept all three families. Fit weighs 0.30, so a 0.1 step moves the score by 0.03: it breaks ties and can't outweigh sponsorship evidence.",
           "SWE": 0.8,
           "AI": 0.7,
           "Cloud": 0.6
         },
         "timeline": {
-          "_why": "Planning arithmetic, not immigration advice. days = role start date - EAD start date. The 90-day figure is the post-completion OPT unemployment allowance; a start after it would mean the clock ran out first.",
+          "_closure": "rationale drafted by tushar-patel28, 2026-10-01",
+          "_why": "Planning arithmetic, not immigration advice. days = role start date - EAD start date (day 0 = the EAD start itself). 0.5 is deliberately below the scorer's 0.6 'weak' threshold, so both risk bands get flagged.",
           "unemployment_allowance_days": 90,
           "bands": [
             {
-              "name": "before-ead-start",
+              "name": "more-than-30-days-before",
               "min_days": null,
-              "max_days": -1,
-              "factor": 0.0
+              "max_days": -31,
+              "factor": 0.0,
+              "why": "too early to negotiate onto the EAD start"
             },
             {
-              "name": "0-60-days",
+              "name": "1-30-days-before",
+              "min_days": -30,
+              "max_days": -1,
+              "factor": 0.5,
+              "why": "start date must be negotiated to on or after the EAD start"
+            },
+            {
+              "name": "0-60-days-after",
               "min_days": 0,
               "max_days": 60,
-              "factor": 1.0
+              "factor": 1.0,
+              "why": "30-day buffer for slips"
             },
             {
-              "name": "61-90-days",
+              "name": "61-90-days-after",
               "min_days": 61,
               "max_days": 90,
-              "factor": 0.6
+              "factor": 0.5,
+              "why": "legal, no buffer"
             },
             {
-              "name": "after-90-days",
+              "name": "more-than-90-days-after",
               "min_days": 91,
               "max_days": null,
-              "factor": 0.0
+              "factor": 0.0,
+              "why": "past the 90-day unemployment allowance (assumption; confirm with the school's international office)"
             }
           ]
         },
         "liveness": {
-          "_why": "The offline prototype never calls the network. Liveness is ASSUMED open so the scorer can run; it is not checked. G3 stays closed for every role until a human runs the liveness command on the posting URL.",
+          "_why": "The offline prototype never calls the network. Liveness is ASSUMED open so the scorer can run; it is not checked. It counts as checked only for a role with an accepted G4 entry, whose liveness_checked_on date the human recorded after running the liveness command.",
           "factor": 1.0,
           "assumed": true,
           "checked": false,
           "clear_with": "npm run ats:liveness -- <posting_url>"
         },
+        "g4": {
+          "_why": "The only path to Apply. A human checks public labor-filing records and the posting, then fills the overrides file. A complete, allowed entry becomes the scorer's override {decision: 'Apply', reason}. An LCA is evidence of an intent to file, not an approved visa.",
+          "required_fields": [
+            "role_id",
+            "lca_evidence_source",
+            "fiscal_year",
+            "soc_code",
+            "posting_says_no_sponsorship",
+            "liveness_checked_on",
+            "checked_on",
+            "reason"
+          ],
+          "refuse_when": [
+            "a required field is missing or has the wrong type",
+            "posting_says_no_sponsorship is true",
+            "the role's timeline gate is 0",
+            "the role's entity result is ambiguous or not-found",
+            "the role_id is unknown, duplicated in the file, or the role was not scored",
+            "a date is in the future"
+          ]
+        },
         "next_action": {
-          "_why": "Ch.7 decision rule: Proven and Likely justify targeted application effort; Unknown stays on the list but gets a different kind of attention (resolve the name, find a direct signal); a closed gate or a low composite is a skip.",
+          "_closure": "rationale drafted by tushar-patel28, 2026-10-01",
+          "_why": "Likely -> tailor an application. Possible -> network: a conversation can confirm whether the company sponsors this role family. Unknown -> network: a conversation resolves sponsorship policy and an application can't; unknown is not no. Gated -> skip. The two 'blocked' outcomes are kept.",
           "rules": [
             {
               "when": "input error (role not scored)",
@@ -273,22 +335,29 @@
               "action": "blocked: pick the right company row, then re-run"
             },
             {
-              "when": "scorer Skip",
+              "when": "gated (timeline factor 0)",
               "action": "skip"
             },
             {
-              "when": "scorer Apply",
+              "when": "G4 override accepted (scorer Apply)",
+              "action": "apply"
+            },
+            {
+              "when": "tier Likely",
               "action": "tailor an application"
             },
             {
-              "when": "scorer Consider and tier Likely",
-              "action": "tailor an application"
+              "when": "tier Possible",
+              "action": "network into the company",
+              "why": "a conversation can confirm whether the company sponsors this role family"
             },
             {
-              "when": "scorer Consider and tier Possible/Unknown",
-              "action": "network into the company"
+              "when": "tier Unknown",
+              "action": "network into the company",
+              "why": "a conversation resolves sponsorship policy and an application can't; unknown is not no"
             }
           ],
+          "early_start_note": "negotiate the start date to on or after the EAD start",
           "g3_block_text": "blocked at G3 until npm run ats:liveness is run by a human"
         }
       },
@@ -306,23 +375,23 @@
     },
     "h1b_rows_with_family_in_top_titles": {
       "SWE": {
-        "value": 539,
+        "value": 511,
         "source": "your-input",
         "basis": "record titles x your-input crosswalk"
       },
       "AI": {
-        "value": 193,
+        "value": 86,
         "source": "your-input",
         "basis": "record titles x your-input crosswalk"
       },
       "Cloud": {
-        "value": 88,
+        "value": 68,
         "source": "your-input",
         "basis": "record titles x your-input crosswalk"
       }
     },
     "h1b_rows_with_no_family_in_top_titles": {
-      "value": 851,
+      "value": 967,
       "source": "your-input",
       "basis": "record titles x your-input crosswalk"
     },
@@ -553,7 +622,7 @@
           "basis": "record titles x your-input crosswalk"
         },
         "claim": {
-          "value": "a title in the SWE family appears in the company's top sponsored titles",
+          "value": "a title in the SWE family appears in the company's top sponsored titles (a title match only; it verifies nothing about the visa's job category)",
           "source": "your-input"
         },
         "top_titles": {
@@ -574,6 +643,11 @@
           "source": "your-input",
           "basis": "record titles x your-input crosswalk"
         },
+        "excluded_titles": {
+          "value": [],
+          "source": "your-input",
+          "note": "hit a family keyword but also an exclusion, so no family (precision over recall)"
+        },
         "unreadable_reason": null
       },
       "sponsorship_vote": {
@@ -591,7 +665,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company has an H-1B trace AND a title in my family is in its top sponsored titles; 0.6 is the Likely value used in data/examples/ch11-roles.json",
+          "value": "A positive record in my family, but no filing year, no SOC, and possibly doubled counts. This is past practice, not current intent, so it stays below Proven.",
           "source": "your-input"
         }
       },
@@ -616,7 +690,7 @@
           "source": "your-input"
         },
         "band": {
-          "value": "0-60-days",
+          "value": "0-60-days-after",
           "source": "your-input"
         },
         "factor": {
@@ -700,6 +774,11 @@
           "value": "Consider",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Consider",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Consider \u2014 blocked at G3 until npm run ats:liveness is run by a human",
           "source": "your-input"
@@ -708,7 +787,8 @@
           "value": "tailor an application",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -774,7 +854,7 @@
           "basis": "record titles x your-input crosswalk"
         },
         "claim": {
-          "value": "a title in the SWE family appears in the company's top sponsored titles",
+          "value": "a title in the SWE family appears in the company's top sponsored titles (a title match only; it verifies nothing about the visa's job category)",
           "source": "your-input"
         },
         "top_titles": {
@@ -795,6 +875,11 @@
           "source": "your-input",
           "basis": "record titles x your-input crosswalk"
         },
+        "excluded_titles": {
+          "value": [],
+          "source": "your-input",
+          "note": "hit a family keyword but also an exclusion, so no family (precision over recall)"
+        },
         "unreadable_reason": null
       },
       "sponsorship_vote": {
@@ -812,7 +897,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company has an H-1B trace AND a title in my family is in its top sponsored titles; 0.6 is the Likely value used in data/examples/ch11-roles.json",
+          "value": "A positive record in my family, but no filing year, no SOC, and possibly doubled counts. This is past practice, not current intent, so it stays below Proven.",
           "source": "your-input"
         }
       },
@@ -837,11 +922,11 @@
           "source": "your-input"
         },
         "band": {
-          "value": "before-ead-start",
+          "value": "1-30-days-before",
           "source": "your-input"
         },
         "factor": {
-          "value": 0.0,
+          "value": 0.5,
           "source": "your-input"
         },
         "disclaimer": {
@@ -873,10 +958,10 @@
           "role_id": "stripe-swe",
           "company": "Stripe, Inc.",
           "title": "Software Engineer, New Grad",
-          "composite": 0,
-          "recommendation": "Skip",
-          "machine_recommendation": "Skip",
-          "reason": "gated: timeline \u2248 0.000 (a closed gate zeroes the composite regardless of votes)",
+          "composite": 0.225,
+          "recommendation": "Consider",
+          "machine_recommendation": "Consider",
+          "reason": "composite 0.225 in the Consider band [0.2, 0.3)",
           "override": null,
           "trace": {
             "votes": [
@@ -904,12 +989,12 @@
               },
               {
                 "factor": "timeline",
-                "multiplier": 0,
+                "multiplier": 0.5,
                 "source": "your-input"
               }
             ],
-            "gate_product": 0,
-            "arithmetic": "(0.6\u00b70.35 + 0.8\u00b70.3) \u00d7 1 \u00d7 0 = 0.000"
+            "gate_product": 0.5,
+            "arithmetic": "(0.6\u00b70.35 + 0.8\u00b70.3) \u00d7 1 \u00d7 0.5 = 0.225"
           }
         },
         "source": "record",
@@ -918,17 +1003,26 @@
       },
       "decision": {
         "machine_recommendation": {
-          "value": "Skip",
+          "value": "Consider",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Consider",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
-          "value": "Skip",
+          "value": "Consider \u2014 blocked at G3 until npm run ats:liveness is run by a human",
           "source": "your-input"
         },
         "next_action": {
-          "value": "skip",
+          "value": "tailor an application",
           "source": "your-input",
           "rule": "mappings.json next_action"
+        },
+        "note": {
+          "value": "negotiate the start date to on or after the EAD start",
+          "source": "your-input"
         }
       }
     },
@@ -995,7 +1089,7 @@
           "basis": "record titles x your-input crosswalk"
         },
         "claim": {
-          "value": "a title in the SWE family appears in the company's top sponsored titles",
+          "value": "a title in the SWE family appears in the company's top sponsored titles (a title match only; it verifies nothing about the visa's job category)",
           "source": "your-input"
         },
         "top_titles": {
@@ -1011,11 +1105,17 @@
         "matched_titles": {
           "value": [
             "Senior Software Engineer",
-            "Staff Software Engineer/Team Lead Manager",
             "Staff Software Engineer - Payments Extensibility, Tech Lead"
           ],
           "source": "your-input",
           "basis": "record titles x your-input crosswalk"
+        },
+        "excluded_titles": {
+          "value": [
+            "Staff Software Engineer/Team Lead Manager"
+          ],
+          "source": "your-input",
+          "note": "hit a family keyword but also an exclusion, so no family (precision over recall)"
         },
         "unreadable_reason": null
       },
@@ -1034,7 +1134,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company has an H-1B trace AND a title in my family is in its top sponsored titles; 0.6 is the Likely value used in data/examples/ch11-roles.json",
+          "value": "A positive record in my family, but no filing year, no SOC, and possibly doubled counts. This is past practice, not current intent, so it stays below Proven.",
           "source": "your-input"
         }
       },
@@ -1059,11 +1159,11 @@
           "source": "your-input"
         },
         "band": {
-          "value": "61-90-days",
+          "value": "61-90-days-after",
           "source": "your-input"
         },
         "factor": {
-          "value": 0.6,
+          "value": 0.5,
           "source": "your-input"
         },
         "disclaimer": {
@@ -1095,10 +1195,10 @@
           "role_id": "toast-swe",
           "company": "Toast, Inc.",
           "title": "Software Engineer I",
-          "composite": 0.27,
+          "composite": 0.225,
           "recommendation": "Consider",
           "machine_recommendation": "Consider",
-          "reason": "composite 0.270 in the Consider band [0.2, 0.3)",
+          "reason": "composite 0.225 in the Consider band [0.2, 0.3)",
           "override": null,
           "trace": {
             "votes": [
@@ -1126,12 +1226,12 @@
               },
               {
                 "factor": "timeline",
-                "multiplier": 0.6,
+                "multiplier": 0.5,
                 "source": "your-input"
               }
             ],
-            "gate_product": 0.6,
-            "arithmetic": "(0.6\u00b70.35 + 0.8\u00b70.3) \u00d7 1 \u00d7 0.6 = 0.270"
+            "gate_product": 0.5,
+            "arithmetic": "(0.6\u00b70.35 + 0.8\u00b70.3) \u00d7 1 \u00d7 0.5 = 0.225"
           }
         },
         "source": "record",
@@ -1143,6 +1243,11 @@
           "value": "Consider",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Consider",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Consider \u2014 blocked at G3 until npm run ats:liveness is run by a human",
           "source": "your-input"
@@ -1151,7 +1256,8 @@
           "value": "tailor an application",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -1221,7 +1327,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company name did not match the data; may be a name-match artifact -> no vote",
+          "value": "Company name did not match the data; may be a coverage or name-match gap -> no vote.",
           "source": "your-input"
         }
       },
@@ -1246,7 +1352,7 @@
           "source": "your-input"
         },
         "band": {
-          "value": "0-60-days",
+          "value": "0-60-days-after",
           "source": "your-input"
         },
         "factor": {
@@ -1323,6 +1429,11 @@
           "value": "Consider",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Consider",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Consider",
           "source": "your-input"
@@ -1331,7 +1442,8 @@
           "value": "network into the company",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -1401,7 +1513,7 @@
           "basis": "record titles x your-input crosswalk"
         },
         "claim": {
-          "value": "a title in the SWE family appears in the company's top sponsored titles",
+          "value": "a title in the SWE family appears in the company's top sponsored titles (a title match only; it verifies nothing about the visa's job category)",
           "source": "your-input"
         },
         "top_titles": {
@@ -1424,6 +1536,11 @@
           "source": "your-input",
           "basis": "record titles x your-input crosswalk"
         },
+        "excluded_titles": {
+          "value": [],
+          "source": "your-input",
+          "note": "hit a family keyword but also an exclusion, so no family (precision over recall)"
+        },
         "unreadable_reason": null
       },
       "sponsorship_vote": {
@@ -1441,7 +1558,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company has an H-1B trace AND a title in my family is in its top sponsored titles; 0.6 is the Likely value used in data/examples/ch11-roles.json",
+          "value": "A positive record in my family, but no filing year, no SOC, and possibly doubled counts. This is past practice, not current intent, so it stays below Proven.",
           "source": "your-input"
         }
       },
@@ -1455,6 +1572,7 @@
       "scorer": null,
       "decision": {
         "machine_recommendation": null,
+        "recommendation": null,
         "shown": {
           "value": "not scored (input error)",
           "source": "your-input"
@@ -1463,7 +1581,8 @@
           "value": "blocked: fix the input and re-run",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -1529,7 +1648,7 @@
           "basis": "record titles x your-input crosswalk"
         },
         "claim": {
-          "value": "a title in the AI family appears in the company's top sponsored titles",
+          "value": "a title in the AI family appears in the company's top sponsored titles (a title match only; it verifies nothing about the visa's job category)",
           "source": "your-input"
         },
         "top_titles": {
@@ -1546,6 +1665,11 @@
           ],
           "source": "your-input",
           "basis": "record titles x your-input crosswalk"
+        },
+        "excluded_titles": {
+          "value": [],
+          "source": "your-input",
+          "note": "hit a family keyword but also an exclusion, so no family (precision over recall)"
         },
         "unreadable_reason": null
       },
@@ -1564,7 +1688,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company has an H-1B trace AND a title in my family is in its top sponsored titles; 0.6 is the Likely value used in data/examples/ch11-roles.json",
+          "value": "A positive record in my family, but no filing year, no SOC, and possibly doubled counts. This is past practice, not current intent, so it stays below Proven.",
           "source": "your-input"
         }
       },
@@ -1589,7 +1713,7 @@
           "source": "your-input"
         },
         "band": {
-          "value": "0-60-days",
+          "value": "0-60-days-after",
           "source": "your-input"
         },
         "factor": {
@@ -1673,6 +1797,11 @@
           "value": "Consider",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Consider",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Consider \u2014 blocked at G3 until npm run ats:liveness is run by a human",
           "source": "your-input"
@@ -1681,7 +1810,8 @@
           "value": "tailor an application",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -1747,7 +1877,7 @@
           "basis": "record titles x your-input crosswalk"
         },
         "claim": {
-          "value": "AI family not in top titles (unknown) \u2014 the list holds only a few titles",
+          "value": "AI family not in top titles (unknown) \u2014 the list holds only a few titles, and ambiguous titles map to no family",
           "source": "your-input"
         },
         "top_titles": {
@@ -1761,6 +1891,11 @@
           "value": [],
           "source": "your-input",
           "basis": "record titles x your-input crosswalk"
+        },
+        "excluded_titles": {
+          "value": [],
+          "source": "your-input",
+          "note": "hit a family keyword but also an exclusion, so no family (precision over recall)"
         },
         "unreadable_reason": null
       },
@@ -1779,7 +1914,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company has an H-1B trace but my family is not in the short top-titles list (unknown, not absent); 0.4 is a proposal placed below Likely \u2014 no record produced it",
+          "value": "The company sponsors, but my family isn't visible in a short top-titles list. Existing sponsorship setup puts it above zero; nothing ties it to my role, so it stays below 0.5. An ordering, not a measured probability.",
           "source": "your-input"
         }
       },
@@ -1804,7 +1939,7 @@
           "source": "your-input"
         },
         "band": {
-          "value": "0-60-days",
+          "value": "0-60-days-after",
           "source": "your-input"
         },
         "factor": {
@@ -1888,6 +2023,11 @@
           "value": "Consider",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Consider",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Consider",
           "source": "your-input"
@@ -1896,7 +2036,8 @@
           "value": "network into the company",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -1977,7 +2118,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "no sponsorship evidence either way -> no sponsorship vote is sent (the scorer skips a vote whose p is null)",
+          "value": "No sponsorship evidence either way -> no sponsorship vote (unknown is not no; p=0 would assert non-sponsorship).",
           "source": "your-input"
         }
       },
@@ -2002,7 +2143,7 @@
           "source": "your-input"
         },
         "band": {
-          "value": "0-60-days",
+          "value": "0-60-days-after",
           "source": "your-input"
         },
         "factor": {
@@ -2079,6 +2220,11 @@
           "value": "Consider",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Consider",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Consider",
           "source": "your-input"
@@ -2087,7 +2233,8 @@
           "value": "network into the company",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -2153,7 +2300,7 @@
           "basis": "record titles x your-input crosswalk"
         },
         "claim": {
-          "value": "Cloud family not in top titles (unknown) \u2014 the list holds only a few titles",
+          "value": "Cloud family not in top titles (unknown) \u2014 the list holds only a few titles, and ambiguous titles map to no family",
           "source": "your-input"
         },
         "top_titles": {
@@ -2170,6 +2317,11 @@
           "value": [],
           "source": "your-input",
           "basis": "record titles x your-input crosswalk"
+        },
+        "excluded_titles": {
+          "value": [],
+          "source": "your-input",
+          "note": "hit a family keyword but also an exclusion, so no family (precision over recall)"
         },
         "unreadable_reason": null
       },
@@ -2188,7 +2340,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company has an H-1B trace but my family is not in the short top-titles list (unknown, not absent); 0.4 is a proposal placed below Likely \u2014 no record produced it",
+          "value": "The company sponsors, but my family isn't visible in a short top-titles list. Existing sponsorship setup puts it above zero; nothing ties it to my role, so it stays below 0.5. An ordering, not a measured probability.",
           "source": "your-input"
         }
       },
@@ -2213,7 +2365,7 @@
           "source": "your-input"
         },
         "band": {
-          "value": "0-60-days",
+          "value": "0-60-days-after",
           "source": "your-input"
         },
         "factor": {
@@ -2297,6 +2449,11 @@
           "value": "Consider",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Consider",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Consider",
           "source": "your-input"
@@ -2305,7 +2462,8 @@
           "value": "network into the company",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -2371,7 +2529,7 @@
           "basis": "record titles x your-input crosswalk"
         },
         "claim": {
-          "value": "a title in the Cloud family appears in the company's top sponsored titles",
+          "value": "a title in the Cloud family appears in the company's top sponsored titles (a title match only; it verifies nothing about the visa's job category)",
           "source": "your-input"
         },
         "top_titles": {
@@ -2392,6 +2550,11 @@
           "source": "your-input",
           "basis": "record titles x your-input crosswalk"
         },
+        "excluded_titles": {
+          "value": [],
+          "source": "your-input",
+          "note": "hit a family keyword but also an exclusion, so no family (precision over recall)"
+        },
         "unreadable_reason": null
       },
       "sponsorship_vote": {
@@ -2409,7 +2572,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company has an H-1B trace AND a title in my family is in its top sponsored titles; 0.6 is the Likely value used in data/examples/ch11-roles.json",
+          "value": "A positive record in my family, but no filing year, no SOC, and possibly doubled counts. This is past practice, not current intent, so it stays below Proven.",
           "source": "your-input"
         }
       },
@@ -2434,7 +2597,7 @@
           "source": "your-input"
         },
         "band": {
-          "value": "0-60-days",
+          "value": "0-60-days-after",
           "source": "your-input"
         },
         "factor": {
@@ -2518,6 +2681,11 @@
           "value": "Consider",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Consider",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Consider \u2014 blocked at G3 until npm run ats:liveness is run by a human",
           "source": "your-input"
@@ -2526,7 +2694,8 @@
           "value": "tailor an application",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -2617,7 +2786,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "more than one row matches; picking one would be a guess -> no vote until a human resolves it",
+          "value": "More than one row matches; picking one would be a guess -> no vote until a human resolves it.",
           "source": "your-input"
         }
       },
@@ -2642,7 +2811,7 @@
           "source": "your-input"
         },
         "band": {
-          "value": "0-60-days",
+          "value": "0-60-days-after",
           "source": "your-input"
         },
         "factor": {
@@ -2719,6 +2888,11 @@
           "value": "Skip",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Skip",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Skip",
           "source": "your-input"
@@ -2727,7 +2901,8 @@
           "value": "blocked: pick the right company row, then re-run",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     },
     {
@@ -2793,7 +2968,7 @@
           "basis": "record titles x your-input crosswalk"
         },
         "claim": {
-          "value": "a title in the Cloud family appears in the company's top sponsored titles",
+          "value": "a title in the Cloud family appears in the company's top sponsored titles (a title match only; it verifies nothing about the visa's job category)",
           "source": "your-input"
         },
         "top_titles": {
@@ -2813,6 +2988,11 @@
           "source": "your-input",
           "basis": "record titles x your-input crosswalk"
         },
+        "excluded_titles": {
+          "value": [],
+          "source": "your-input",
+          "note": "hit a family keyword but also an exclusion, so no family (precision over recall)"
+        },
         "unreadable_reason": null
       },
       "sponsorship_vote": {
@@ -2830,7 +3010,7 @@
           "source": "your-input"
         },
         "why": {
-          "value": "company has an H-1B trace AND a title in my family is in its top sponsored titles; 0.6 is the Likely value used in data/examples/ch11-roles.json",
+          "value": "A positive record in my family, but no filing year, no SOC, and possibly doubled counts. This is past practice, not current intent, so it stays below Proven.",
           "source": "your-input"
         }
       },
@@ -2855,7 +3035,7 @@
           "source": "your-input"
         },
         "band": {
-          "value": "after-90-days",
+          "value": "more-than-90-days-after",
           "source": "your-input"
         },
         "factor": {
@@ -2939,6 +3119,11 @@
           "value": "Skip",
           "source": "record"
         },
+        "recommendation": {
+          "value": "Skip",
+          "source": "record",
+          "note": "after the scorer applied any G4 override"
+        },
         "shown": {
           "value": "Skip",
           "source": "your-input"
@@ -2947,10 +3132,26 @@
           "value": "skip",
           "source": "your-input",
           "rule": "mappings.json next_action"
-        }
+        },
+        "note": null
       }
     }
   ],
+  "g4_overrides": {
+    "file": {
+      "value": "scripts/contrib/2026fa/tushar-patel28-swe-title-sponsor-opt/sample/overrides.json",
+      "source": "your-input"
+    },
+    "entries_in_file": {
+      "value": 0,
+      "source": "your-input"
+    },
+    "results": [],
+    "note": {
+      "value": "An LCA is evidence of an intent to file, not an approved visa.",
+      "source": "your-input"
+    }
+  },
   "scorer_run": {
     "command": {
       "value": "npm run score -- course/2026fa/submissions/tushar-patel28/runs/roles.json --out-dir course/2026fa/submissions/tushar-patel28/runs",
@@ -2961,7 +3162,7 @@
       "source": "record"
     },
     "stdout": {
-      "value": "> the-reallocation-engine@1.0.0 score\n> node scripts/score/role-scorer.mjs course/2026fa/submissions/tushar-patel28/runs/roles.json --out-dir course/2026fa/submissions/tushar-patel28/runs\n\n\u2713 scored 11 roles \u2192 Apply 0 \u00b7 Consider 8 \u00b7 Skip 3 (skip 27%)\n  course/2026fa/submissions/tushar-patel28/runs/role-scores.json  +  course/2026fa/submissions/tushar-patel28/runs/role-scores.md",
+      "value": "> the-reallocation-engine@1.0.0 score\n> node scripts/score/role-scorer.mjs course/2026fa/submissions/tushar-patel28/runs/roles.json --out-dir course/2026fa/submissions/tushar-patel28/runs\n\n\u2713 scored 11 roles \u2192 Apply 0 \u00b7 Consider 9 \u00b7 Skip 2 (skip 18%)\n  course/2026fa/submissions/tushar-patel28/runs/role-scores.json  +  course/2026fa/submissions/tushar-patel28/runs/role-scores.md",
       "source": "record"
     },
     "config": {
@@ -2992,6 +3193,10 @@
     },
     "gate_echo_guard": {
       "value": "passed: scorer multiplied exactly the gates sent; every timeline=0 role is a gated Skip",
+      "source": "record"
+    },
+    "override_guard": {
+      "value": "passed: scorer applied exactly the G4 overrides sent and no others",
       "source": "record"
     },
     "files": {
@@ -3033,30 +3238,48 @@
     },
     "by_scorer_recommendation": {
       "value": {
-        "Consider": 8,
-        "Skip": 3,
-        "not scored": 1
+        "Consider": 9,
+        "not scored": 1,
+        "Skip": 2
       },
-      "source": "record"
+      "source": "record",
+      "note": "the scorer's machine recommendation, before any G4 override"
+    },
+    "by_final_recommendation": {
+      "value": {
+        "Consider": 9,
+        "not scored": 1,
+        "Skip": 2
+      },
+      "source": "record",
+      "note": "after the scorer applied G4 overrides"
     },
     "by_next_action": {
       "value": {
-        "tailor an application": 4,
-        "skip": 2,
+        "tailor an application": 5,
         "network into the company": 4,
         "blocked: fix the input and re-run": 1,
-        "blocked: pick the right company row, then re-run": 1
+        "blocked: pick the right company row, then re-run": 1,
+        "skip": 1
       },
       "source": "your-input"
     },
     "skip_rate_of_scored": {
-      "value": "3/11",
+      "value": "2/11",
       "source": "record"
+    },
+    "g4_accepted": {
+      "value": 0,
+      "source": "your-input"
+    },
+    "g4_refused": {
+      "value": 0,
+      "source": "your-input"
     },
     "g3_cleared": {
       "value": 0,
-      "source": "record",
-      "note": "liveness was not checked for any role"
+      "source": "your-input",
+      "note": "only roles whose accepted G4 entry records a human liveness check"
     }
   }
 }

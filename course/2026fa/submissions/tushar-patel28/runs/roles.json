@@ -39,7 +39,7 @@
       "factor": 1.0,
       "source": "your-input",
       "days_after_ead_start": 17,
-      "band": "0-60-days",
+      "band": "0-60-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "SWE",
@@ -82,10 +82,10 @@
       "checked": false
     },
     "timeline": {
-      "factor": 0.0,
+      "factor": 0.5,
       "source": "your-input",
       "days_after_ead_start": -11,
-      "band": "before-ead-start",
+      "band": "1-30-days-before",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "SWE",
@@ -105,7 +105,6 @@
         "family_check": "in-top-titles",
         "matched_titles": [
           "Senior Software Engineer",
-          "Staff Software Engineer/Team Lead Manager",
           "Staff Software Engineer - Payments Extensibility, Tech Lead"
         ],
         "matched_row": [
@@ -129,10 +128,10 @@
       "checked": false
     },
     "timeline": {
-      "factor": 0.6,
+      "factor": 0.5,
       "source": "your-input",
       "days_after_ead_start": 66,
-      "band": "61-90-days",
+      "band": "61-90-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "SWE",
@@ -169,7 +168,7 @@
       "factor": 1.0,
       "source": "your-input",
       "days_after_ead_start": 31,
-      "band": "0-60-days",
+      "band": "0-60-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "SWE",
@@ -214,7 +213,7 @@
       "factor": 1.0,
       "source": "your-input",
       "days_after_ead_start": 10,
-      "band": "0-60-days",
+      "band": "0-60-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "AI",
@@ -257,7 +256,7 @@
       "factor": 1.0,
       "source": "your-input",
       "days_after_ead_start": 38,
-      "band": "0-60-days",
+      "band": "0-60-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "AI",
@@ -300,7 +299,7 @@
       "factor": 1.0,
       "source": "your-input",
       "days_after_ead_start": 10,
-      "band": "0-60-days",
+      "band": "0-60-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "AI",
@@ -343,7 +342,7 @@
       "factor": 1.0,
       "source": "your-input",
       "days_after_ead_start": 24,
-      "band": "0-60-days",
+      "band": "0-60-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "Cloud",
@@ -388,7 +387,7 @@
       "factor": 1.0,
       "source": "your-input",
       "days_after_ead_start": 45,
-      "band": "0-60-days",
+      "band": "0-60-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "Cloud",
@@ -436,7 +435,7 @@
       "factor": 1.0,
       "source": "your-input",
       "days_after_ead_start": 25,
-      "band": "0-60-days",
+      "band": "0-60-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "Cloud",
@@ -481,7 +480,7 @@
       "factor": 0.0,
       "source": "your-input",
       "days_after_ead_start": 101,
-      "band": "after-90-days",
+      "band": "more-than-90-days-after",
       "note": "planning arithmetic, not immigration advice"
     },
     "role_family": "Cloud",

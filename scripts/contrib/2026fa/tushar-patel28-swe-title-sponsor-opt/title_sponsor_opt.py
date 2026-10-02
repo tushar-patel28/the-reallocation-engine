@@ -12,6 +12,9 @@ For each candidate role this script:
   G2  computes timeline.factor from the role start date vs the persona's EAD start
       (mappings.json, your-input; planning arithmetic, not immigration advice);
   G3  sets liveness to an ASSUMED 1.0 — never checked here, no network;
+  G4  the only path to Apply: a human-filled overrides file (your-input) whose complete,
+      allowed entries become the scorer's override {decision: "Apply", reason}; incomplete
+      or disallowed entries are refused with a message;
 then writes roles.json, runs the REAL scorer CLI (npm run score), reads role-scores.json,
 and writes a labelled JSON log (agents) and a Markdown report (human).
 
@@ -55,6 +58,7 @@ DISCLAIMER = ("Timeline factors are planning arithmetic, not immigration advice.
 DEFAULTS = {
     "persona": HERE / "sample" / "persona.json",
     "roles": HERE / "sample" / "candidate-roles.json",
+    "overrides": HERE / "sample" / "overrides.json",
     "crosswalk": HERE / "crosswalk.json",
     "mappings": HERE / "mappings.json",
     "csv": REPO / "data" / "80-days-to-stay" / "80-days-csv" / "mapped_student_employment_targets_v3.csv",
@@ -179,17 +183,25 @@ def load_crosswalk(path: Path) -> dict:
     if missing:
         raise ConfigError(f"crosswalk has no patterns for families: {missing}")
     compiled = {}
-    for f in FAMILIES:
-        try:
+    try:
+        for f in FAMILIES:
             compiled[f] = [re.compile(p, re.IGNORECASE) for p in fams[f]["patterns"]]
-        except re.error as e:
-            raise ConfigError(f"crosswalk pattern for {f} does not compile: {e}")
-    return {"raw": cw, "compiled": compiled}
+        exclude = [re.compile(p, re.IGNORECASE) for p in cw.get("exclude_patterns", [])]
+    except re.error as e:
+        raise ConfigError(f"crosswalk pattern does not compile: {e}")
+    return {"raw": cw, "compiled": compiled, "exclude": exclude}
+
+
+def title_families(title: str, crosswalk: dict) -> set:
+    """Families a single title maps to: none if it hits an exclusion (precision over recall)."""
+    if any(x.search(title) for x in crosswalk["exclude"]):
+        return set()
+    return {f for f, pats in crosswalk["compiled"].items() if any(p.search(title) for p in pats)}
 
 
 def load_mappings(path: Path) -> dict:
     m = read_json(path, "mappings")
-    for key in ("sponsorship", "fit", "timeline", "liveness", "next_action"):
+    for key in ("sponsorship", "fit", "timeline", "liveness", "g4", "next_action"):
         if key not in m:
             raise ConfigError(f"mappings.json is missing the '{key}' block")
     for f in FAMILIES:
@@ -200,6 +212,70 @@ def load_mappings(path: Path) -> dict:
         if state not in m["sponsorship"]:
             raise ConfigError(f"mappings.json sponsorship has no entry for evidence state '{state}'")
     return m
+
+
+def load_overrides(path: Path) -> list:
+    """G4 overrides file (your-input). Required — an explicitly empty list means 'no human evidence yet'."""
+    o = read_json(path, "G4 overrides")
+    entries = o.get("overrides") if isinstance(o, dict) else None
+    if not isinstance(entries, list):
+        raise ConfigError(f"G4 overrides file {rel(path)} must be an object with an 'overrides' list (use [] for none)")
+    return entries
+
+
+G4_FIELDS = ("role_id", "lca_evidence_source", "fiscal_year", "soc_code", "posting_says_no_sponsorship",
+             "liveness_checked_on", "checked_on", "reason")
+SOC_CODE = re.compile(r"^\d{2}-\d{4}(\.\d{2})?$")
+
+
+def validate_override(entry, roles_ctx: dict, seen: set, today: dt.date) -> str | None:
+    """Return None if the G4 entry may become an Apply override, else the refusal message."""
+    if not isinstance(entry, dict):
+        return "G4 refused an entry that is not an object"
+    rid = entry.get("role_id")
+    who = f"G4 refused override for role '{rid}'"
+    missing = [f for f in G4_FIELDS if f not in entry or entry[f] is None or (isinstance(entry[f], str) and not entry[f].strip())]
+    if missing:
+        return f"{who}: missing field(s) {missing}"
+    if not isinstance(rid, str):
+        return f"{who}: role_id must be a string"
+    for f in ("lca_evidence_source", "reason"):
+        if not isinstance(entry[f], str):
+            return f"{who}: {f} must be text"
+    if not isinstance(entry["fiscal_year"], int) or isinstance(entry["fiscal_year"], bool) or not 2000 <= entry["fiscal_year"] <= 2100:
+        return f"{who}: fiscal_year must be a four-digit integer, got {entry['fiscal_year']!r}"
+    if not isinstance(entry["soc_code"], str) or not SOC_CODE.match(entry["soc_code"]):
+        return f"{who}: soc_code must look like 15-1252 or 15-1252.00, got {entry['soc_code']!r}"
+    if not isinstance(entry["posting_says_no_sponsorship"], bool):
+        return f"{who}: posting_says_no_sponsorship must be true or false, got {entry['posting_says_no_sponsorship']!r}"
+    for f in ("liveness_checked_on", "checked_on"):
+        d = parse_iso_date(entry[f])
+        if d is None:
+            return f"{who}: {f} must be a YYYY-MM-DD date, got {entry[f]!r}"
+        if d > today:
+            return f"{who}: {f} {entry[f]} is in the future — a check cannot be recorded before it happens"
+    if rid not in roles_ctx:
+        return f"{who}: no such role in the candidate-roles file"
+    if rid in seen:
+        return f"{who}: more than one entry for this role"
+    ctx = roles_ctx[rid]
+    if not ctx["scored"]:
+        return f"{who}: the role was not scored (input error), so there is nothing to override"
+    if entry["posting_says_no_sponsorship"]:
+        return f"{who}: the posting says it does not sponsor — evidence of past filings cannot override that"
+    if ctx["timeline_factor"] == 0:
+        return f"{who}: its timeline gate is 0 ({ctx['band']}) — an override cannot reopen a closed gate"
+    if ctx["g1_status"] in ("ambiguous", "not-found"):
+        return (f"{who}: its company match is {ctx['g1_status']} — resolve which company this is before "
+                "attaching LCA evidence to it")
+    return None
+
+
+def override_reason(entry: dict) -> str:
+    """The scorer's override.reason: the human's reason plus every G4 evidence field."""
+    ev = "; ".join(f"{f}={json.dumps(entry[f]) if isinstance(entry[f], bool) else entry[f]}"
+                   for f in G4_FIELDS if f not in ("role_id", "reason"))
+    return f"G4 human override — {entry['reason'].strip()} | evidence: {ev} | an LCA is evidence of an intent to file, not an approved visa"
 
 
 def load_sponsorship_csv(path: Path, normalize, h1b_columns) -> dict:
@@ -269,19 +345,20 @@ def g1_entity(company: str, csvdata: dict, normalize, h1b_present) -> dict:
 def family_check(row: dict, family: str, crosswalk: dict, present) -> dict:
     raw = row.get("top_job_titles_sponsored")
     if not present(raw):
-        return {"status": "titles-unreadable", "reason": "top_job_titles_sponsored is empty", "titles": None, "matched": []}
+        return {"status": "titles-unreadable", "reason": "top_job_titles_sponsored is empty", "titles": None, "matched": [], "excluded": []}
     try:
         titles = ast.literal_eval(raw)
     except (ValueError, SyntaxError) as e:
         return {"status": "titles-unreadable", "reason": f"not a Python list literal ({type(e).__name__})",
-                "titles": None, "matched": []}
+                "titles": None, "matched": [], "excluded": []}
     if not isinstance(titles, list) or not titles or not all(isinstance(t, str) for t in titles):
         return {"status": "titles-unreadable", "reason": "parsed value is not a non-empty list of strings",
-                "titles": None, "matched": []}
+                "titles": None, "matched": [], "excluded": []}
     pats = crosswalk["compiled"][family]
-    matched = [t for t in titles if any(p.search(t) for p in pats)]
+    matched = [t for t in titles if family in title_families(t, crosswalk)]
+    excluded = [t for t in titles if t not in matched and any(p.search(t) for p in pats)]
     return {"status": "in-top-titles" if matched else "not-in-top-titles", "reason": None,
-            "titles": titles, "matched": matched}
+            "titles": titles, "matched": matched, "excluded": excluded}
 
 
 def g2_timeline(role_id: str, start_value, ead: dt.date, tl: dict) -> dict:
@@ -350,32 +427,50 @@ def check_gate_echo(sent: dict, scores: dict) -> None:
                              f"{got[rid]['machine_recommendation']} ({got[rid]['reason']})")
 
 
+def check_overrides(sent: dict, scores: dict) -> None:
+    """The scorer must apply exactly the G4 overrides sent, and no others."""
+    for r in scores.get("roles", []):
+        rid, has = r["role_id"], "override" in sent.get(r["role_id"], {})
+        if has and not (r["recommendation"] == "Apply" and (r.get("override") or {}).get("reason") == sent[rid]["override"]["reason"]):
+            raise GuardError(f"role '{rid}': a G4 override was sent but the scorer returned {r['recommendation']} "
+                             f"(override {r.get('override')!r})")
+        if not has and (r.get("override") or r["recommendation"] != r["machine_recommendation"]):
+            raise GuardError(f"role '{rid}': no G4 override was sent but the scorer's recommendation "
+                             f"{r['recommendation']} differs from its machine recommendation {r['machine_recommendation']}")
+
+
 # ── decisions ───────────────────────────────────────────────────────────────────
 
-def next_action(machine_rec: str | None, tier: str | None, g1_status: str | None, mappings: dict) -> str:
-    """mappings.json next_action rules, in order (your-input; Ch.7 decision rule)."""
-    if machine_rec is None:
+def next_action(scored: bool, tier: str | None, g1_status: str | None, timeline_factor, g4_accepted: bool) -> str:
+    """mappings.json next_action rules, in order (closed DEFINE; rationale drafted by tushar-patel28, 2026-10-01)."""
+    if not scored:
         return "blocked: fix the input and re-run"
     if g1_status == "ambiguous":
-        # Ch.7: an Unknown caused by a name-match problem is fixed by resolving the entity, not skipped.
         return "blocked: pick the right company row, then re-run"
-    if machine_rec == "Skip":
+    if timeline_factor == 0:
         return "skip"
-    if machine_rec == "Apply" or (machine_rec == "Consider" and tier == "Likely"):
+    if g4_accepted:
+        return "apply"
+    if tier == "Likely":
         return "tailor an application"
+    # Possible: a conversation can confirm whether the company sponsors this role family.
+    # Unknown: a conversation resolves sponsorship policy and an application can't; unknown is not no.
     return "network into the company"
 
 
-def shown_decision(machine_rec: str | None, action: str, mappings: dict) -> str:
-    """What the human sees. Apply is never shown bare: G3 cannot be cleared offline."""
+def shown_decision(recommendation: str | None, action: str, mappings: dict, g4_entry: dict | None = None) -> str:
+    """What the human sees. Apply appears only via an accepted G4 entry; otherwise G3 blocks it."""
     block = mappings["next_action"]["g3_block_text"]
-    if machine_rec is None:
+    if recommendation is None:
         return "not scored (input error)"
-    if machine_rec == "Apply":
+    if recommendation == "Apply" and g4_entry:
+        return (f"Apply — G4 human override (LCA FY{g4_entry['fiscal_year']}, SOC {g4_entry['soc_code']}; "
+                f"liveness checked {g4_entry['liveness_checked_on']})")
+    if recommendation == "Apply":
         return f"Apply — {block}"
     if action == "tailor an application":
-        return f"{machine_rec} — {block}"
-    return machine_rec
+        return f"{recommendation} — {block}"
+    return recommendation
 
 
 # ── pipeline ────────────────────────────────────────────────────────────────────
@@ -388,6 +483,7 @@ def build(args, scorer_cmd: list[str] | None = None) -> dict:
     mappings = load_mappings(args.mappings)
     csvdata = load_sponsorship_csv(args.csv, normalize, h1b_columns)
     bls = load_bls(args.bls, crosswalk["raw"])
+    overrides_in = load_overrides(args.overrides)
     roles_in = read_json(args.roles, "candidate roles")
     roles_in = roles_in.get("roles", []) if isinstance(roles_in, dict) else roles_in
     if not isinstance(roles_in, list) or not roles_in:
@@ -428,8 +524,8 @@ def build(args, scorer_cmd: list[str] | None = None) -> dict:
                 fc = family_check(g1["rows"][0], fam, crosswalk, present)
                 state = f"matched-h1b+{fc['status']}"
                 claim = {
-                    "in-top-titles": f"a title in the {fam} family appears in the company's top sponsored titles",
-                    "not-in-top-titles": f"{fam} family not in top titles (unknown) — the list holds only a few titles",
+                    "in-top-titles": f"a title in the {fam} family appears in the company's top sponsored titles (a title match only; it verifies nothing about the visa's job category)",
+                    "not-in-top-titles": f"{fam} family not in top titles (unknown) — the list holds only a few titles, and ambiguous titles map to no family",
                     "titles-unreadable": "the top-titles list could not be read; no family claim is made",
                 }[fc["status"]]
                 e["family_check"] = {
@@ -437,6 +533,8 @@ def build(args, scorer_cmd: list[str] | None = None) -> dict:
                     "claim": lab(claim, "your-input"),
                     "top_titles": lab(fc["titles"], "record"),
                     "matched_titles": lab(fc["matched"], "your-input", basis="record titles x your-input crosswalk"),
+                    "excluded_titles": lab(fc["excluded"], "your-input",
+                                           note="hit a family keyword but also an exclusion, so no family (precision over recall)"),
                     "unreadable_reason": lab(fc["reason"], "record") if fc["reason"] else None,
                 }
             else:
@@ -478,6 +576,38 @@ def build(args, scorer_cmd: list[str] | None = None) -> dict:
             e["error"] = lab(str(err), "your-input", note="this role was not sent to the scorer")
             print(f"  ! {err}", file=sys.stderr)
 
+    # ── G4: human-filled overrides — the only path to Apply ──
+    by_entry = {e["role_id"]["value"]: e for e in entries}
+    roles_ctx = {rid: {"scored": rid in to_score,
+                       "timeline_factor": to_score[rid]["timeline"]["factor"] if rid in to_score else None,
+                       "band": to_score[rid]["timeline"]["band"] if rid in to_score else None,
+                       "g1_status": e.get("g1_entity", {}).get("status", {}).get("value")}
+                 for rid, e in by_entry.items()}
+    g4_log, accepted, g4_seen = [], {}, set()
+    for entry in overrides_in:
+        msg = validate_override(entry, roles_ctx, g4_seen, dt.date.today())
+        rid = entry.get("role_id") if isinstance(entry, dict) else None
+        if isinstance(rid, str):
+            g4_seen.add(rid)
+        if msg is None:
+            accepted[rid] = entry
+            to_score[rid]["override"] = {"decision": "Apply", "reason": override_reason(entry)}
+            to_score[rid]["liveness"] = {"factor": lv["factor"], "source": "your-input", "assumed": False, "checked": True,
+                                         "checked_on": entry["liveness_checked_on"], "checked_by": "human, recorded in the G4 entry"}
+            result = lab("accepted", "your-input", message=f"G4 accepted override for role '{rid}': sent to the scorer as Apply")
+        else:
+            print(f"  ! {msg}", file=sys.stderr)
+            result = lab("refused", "your-input", message=msg)
+        g4_log.append({"entry": lab(entry, "your-input"), "result": result})
+        if rid in by_entry:
+            by_entry[rid].setdefault("g4_override", []).append(result)
+    for rid, entry in accepted.items():
+        e = by_entry[rid]
+        e["g3_liveness"].update({
+            "assumed": lab(False, "your-input"),
+            "checked": lab(True, "your-input", note="the human recorded running the liveness command in the G4 entry"),
+            "checked_on": lab(entry["liveness_checked_on"], "your-input")})
+
     roles_path = out_dir / "roles.json"
     roles_path.write_text(json.dumps(list(to_score.values()), indent=2) + "\n", encoding="utf-8")
 
@@ -486,6 +616,7 @@ def build(args, scorer_cmd: list[str] | None = None) -> dict:
         scorer = run_scorer(roles_path, out_dir, scorer_cmd)
         n_terms = check_sponsorship_weights(scorer["scores"])
         check_gate_echo(to_score, scorer["scores"])
+        check_overrides(to_score, scorer["scores"])
         scorer["sponsorship_terms_checked"] = n_terms
     scored = {r["role_id"]: r for r in (scorer["scores"]["roles"] if scorer else [])}
 
@@ -493,13 +624,19 @@ def build(args, scorer_cmd: list[str] | None = None) -> dict:
         rid = e["role_id"]["value"]
         s = scored.get(rid)
         tier = e.get("sponsorship_vote", {}).get("tier", {}).get("value")
-        machine = s["machine_recommendation"] if s else None
-        action = next_action(machine, tier, e.get("g1_entity", {}).get("status", {}).get("value"), mappings)
+        band = e.get("g2_timeline", {}).get("band", {}).get("value")
+        factor = e.get("g2_timeline", {}).get("factor", {}).get("value")
+        action = next_action(s is not None, tier, e.get("g1_entity", {}).get("status", {}).get("value"), factor, rid in accepted)
+        note = mappings["next_action"]["early_start_note"] if band == "1-30-days-before" and action != "skip" else None
         e["scorer"] = lab(s, "record", file=rel(out_dir / "role-scores.json"),
                           note="verbatim from the real scorer CLI") if s else None
-        e["decision"] = {"machine_recommendation": lab(machine, "record") if s else None,
-                         "shown": lab(shown_decision(machine, action, mappings), "your-input"),
-                         "next_action": lab(action, "your-input", rule="mappings.json next_action")}
+        e["decision"] = {"machine_recommendation": lab(s["machine_recommendation"], "record") if s else None,
+                         "recommendation": lab(s["recommendation"], "record",
+                                               note="after the scorer applied any G4 override") if s else None,
+                         "shown": lab(shown_decision(s["recommendation"] if s else None, action, mappings,
+                                                     accepted.get(rid)), "your-input"),
+                         "next_action": lab(action, "your-input", rule="mappings.json next_action"),
+                         "note": lab(note, "your-input") if note else None}
 
     coverage = dataset_coverage(csvdata, crosswalk, present, h1b_present)
     log = {
@@ -512,7 +649,8 @@ def build(args, scorer_cmd: list[str] | None = None) -> dict:
             "persona": {k: lab(v, "your-input") for k, v in persona.items() if not k.startswith("_")},
             "files": {name: lab(rel(getattr(args, name)), src, sha256=sha256(getattr(args, name)))
                       for name, src in (("csv", "record"), ("bls", "record"), ("persona", "your-input"),
-                                        ("roles", "your-input"), ("crosswalk", "your-input"), ("mappings", "your-input"))},
+                                        ("roles", "your-input"), ("overrides", "your-input"), ("crosswalk", "your-input"),
+                                        ("mappings", "your-input"))},
             "maintained_code_reused": {"normalizer": lab(rel(MAINTAINED_NORMALIZER) + "::normalize_company_name", "record"),
                                        "h1b_presence": lab(rel(MAINTAINED_H1B_HELPERS) + "::h1b_present", "record")},
             "crosswalk": lab(crosswalk["raw"], "your-input"),
@@ -522,6 +660,10 @@ def build(args, scorer_cmd: list[str] | None = None) -> dict:
         "bls_context": {"note": lab("context only: role_quality weight is 0 in the scorer, so wages do not enter the score", "record"),
                         "families": bls},
         "roles": entries,
+        "g4_overrides": {"file": lab(rel(args.overrides), "your-input"),
+                         "entries_in_file": lab(len(overrides_in), "your-input"),
+                         "results": g4_log,
+                         "note": lab("An LCA is evidence of an intent to file, not an approved visa.", "your-input")},
         "scorer_run": None if scorer is None else {
             "command": lab(" ".join(scorer["cmd"]), "record"),
             "exit_code": lab(scorer["exit"], "record"),
@@ -530,10 +672,11 @@ def build(args, scorer_cmd: list[str] | None = None) -> dict:
             "profile_needs_sponsorship": lab(scorer["scores"].get("profile_needs_sponsorship"), "record"),
             "sponsorship_weight_guard": lab(f"passed: {scorer['sponsorship_terms_checked']} sponsorship term(s), all weight > 0", "record"),
             "gate_echo_guard": lab("passed: scorer multiplied exactly the gates sent; every timeline=0 role is a gated Skip", "record"),
+            "override_guard": lab("passed: scorer applied exactly the G4 overrides sent and no others", "record"),
             "files": {"roles_json": lab(rel(roles_path), "record"), "role_scores_json": lab(rel(scorer["scores_path"]), "record"),
                       "role_scores_md": lab(rel(scorer["md_path"]), "record")},
         },
-        "summary": summarize(entries),
+        "summary": summarize(entries, g4_log),
     }
     log_path = out_dir / f"swe-title-sponsor-opt-{run_date}.json"
     report_path = out_dir / f"swe-title-sponsor-opt-{run_date}.md"
@@ -571,7 +714,7 @@ def dataset_coverage(csvdata, crosswalk, present, h1b_present) -> dict:
     }
 
 
-def summarize(entries) -> dict:
+def summarize(entries, g4_log) -> dict:
     def count(f):
         out = {}
         for e in entries:
@@ -580,15 +723,21 @@ def summarize(entries) -> dict:
         return out
     scored = [e for e in entries if e.get("scorer")]
     skips = sum(1 for e in scored if e["decision"]["machine_recommendation"]["value"] == "Skip")
+    n_acc = sum(1 for g in g4_log if g["result"]["value"] == "accepted")
     return {
         "roles_in": lab(len(entries), "your-input"),
         "roles_scored": lab(len(scored), "record"),
         "roles_not_scored": lab(len(entries) - len(scored), "record"),
         "by_g1_status": lab(count(lambda e: e.get("g1_entity", {}).get("status", {}).get("value", "not-checked")), "record"),
-        "by_scorer_recommendation": lab(count(lambda e: (e["decision"]["machine_recommendation"] or {}).get("value", "not scored")), "record"),
+        "by_scorer_recommendation": lab(count(lambda e: (e["decision"]["machine_recommendation"] or {}).get("value", "not scored")), "record",
+                                        note="the scorer's machine recommendation, before any G4 override"),
+        "by_final_recommendation": lab(count(lambda e: (e["decision"]["recommendation"] or {}).get("value", "not scored")), "record",
+                                       note="after the scorer applied G4 overrides"),
         "by_next_action": lab(count(lambda e: e["decision"]["next_action"]["value"]), "your-input"),
         "skip_rate_of_scored": lab(f"{skips}/{len(scored)}", "record"),
-        "g3_cleared": lab(0, "record", note="liveness was not checked for any role"),
+        "g4_accepted": lab(n_acc, "your-input"),
+        "g4_refused": lab(len(g4_log) - n_acc, "your-input"),
+        "g3_cleared": lab(n_acc, "your-input", note="only roles whose accepted G4 entry records a human liveness check"),
     }
 
 
@@ -633,16 +782,21 @@ def render_report(log: dict) -> str:
     o.append("**Why read it.** It shows, opening by opening, which numbers come from public data and which come from "
              "the student's own definitions, so the student can see exactly why each opening was ranked the way it was "
              "and what they still have to check by hand.\n")
+    n_acc, n_ref = v(s["g4_accepted"]), v(s["g4_refused"])
     o.append(f"**What it found.** {len(scored)} openings were scored and {len(errors)} could not be scored because the "
              f"start date was missing or invalid. The scoring tool said: "
              + ", ".join(f"{k} {n}" for k, n in sorted(recs.items())) + ". Suggested next steps: "
              + ", ".join(f"{k} {n}" for k, n in sorted(acts.items())) + ". "
              f"For {unknown} openings the company's sponsorship history is simply unknown (no match, no trace, or "
-             "more than one possible match). That is not evidence the company refuses to sponsor. "
-             "No opening can reach a plain \"Apply\" under the current definitions: the data has no filing years, so "
-             "the strongest sponsorship level it can support is \"likely\", which the scorer treats as a soft spot. "
-             "Whether any posting is still open was not checked. Every \"tailor an application\" step waits until a "
-             "person confirms the posting is live. The date arithmetic is for planning only and is not immigration advice.\n")
+             "more than one possible match). That is not evidence the company refuses to sponsor, so the next step "
+             "there is a conversation, not a skip. "
+             "An opening reaches \"Apply\" only when a person has checked public labor-filing records and the live "
+             "posting, and written that evidence down; "
+             + (f"{n_acc} such entries were accepted and {n_ref} refused in this run. "
+                if (n_acc or n_ref) else "none was supplied in this run, so no opening is marked Apply. ")
+             + "Openings whose start date is up to 30 days before the work permit begins, or 61 to 90 days after it, "
+             "are kept but flagged as risky. Whether a posting is still open was not checked except where a person "
+             "recorded it. The date arithmetic is for planning only and is not immigration advice.\n")
 
     o.append("## How to read the labels\n")
     o.append("- `[record]` came from a data file or from the scorer's own output, unchanged.")
@@ -653,15 +807,16 @@ def render_report(log: dict) -> str:
              "because the definition is the part a human must check.\n")
 
     o.append("## Decisions\n")
-    o.append("| Role | Family | Company evidence (G1) | Family in top titles | Start vs EAD | Timeline factor (G2) | Liveness (G3) | Votes sent | Composite | Scorer | Shown decision | Next action |")
-    o.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
+    o.append("| Role | Family | Company evidence (G1) | Family in top titles | Start vs EAD | Timeline factor (G2) | Liveness (G3) | G4 human evidence | Votes sent | Composite | Scorer (machine → final) | Shown decision | Next action |")
+    o.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for e in roles:
         inp = e["input"]
         name = f"{v(inp['company'])} — {v(inp['title'])}"
         if e.get("error"):
             g1s = cell(e["g1_entity"]["status"]) if e.get("g1_entity") else "—"
             fcs = cell(e["family_check"]["status"]) if e.get("family_check") else "—"
-            o.append(f"| {name} | {cell(inp['role_family'])} | {g1s} | {fcs} | {cell(inp['start_date'])} | **error** | — | — | — | not scored | "
+            g4s = "; ".join(f"{x['value']} [{x['source']}]" for x in e.get("g4_override", [])) or "none"
+            o.append(f"| {name} | {cell(inp['role_family'])} | {g1s} | {fcs} | {cell(inp['start_date'])} | **error** | — | {g4s} | — | — | not scored | "
                      f"{cell(e['decision']['shown'])} | {cell(e['decision']['next_action'])} |")
             continue
         g, fc, t, lv = e["g1_entity"], e["family_check"], e["g2_timeline"], e["g3_liveness"]
@@ -670,11 +825,19 @@ def render_report(log: dict) -> str:
         votes = (f"sponsorship {v(sv['tier'])} p={p if p is not None else 'none (no vote)'} {tag(sv['p'])}; "
                  f"fit p={v(fv['p'])} {tag(fv['p'])}")
         sc = v(e["scorer"])
+        live = (f"{v(lv['factor']):g} checked on {v(lv['checked_on'])} by a human {tag(lv['checked_on'])}" if v(lv["checked"])
+                else f"{v(lv['factor']):g} assumed, not checked {tag(lv['factor'])}")
+        g4s = "; ".join(f"{x['value']} [{x['source']}]" for x in e.get("g4_override", [])) or "none"
+        rec = sc["machine_recommendation"] if sc["recommendation"] == sc["machine_recommendation"] \
+            else f"{sc['machine_recommendation']} → {sc['recommendation']} (G4 override)"
+        action = cell(e["decision"]["next_action"])
+        if e["decision"].get("note"):
+            action += f"; {cell(e['decision']['note'])}"
         o.append(f"| {name} | {cell(inp['role_family'])} | {cell(g['status'])} | {cell(fc['status'])} | "
                  f"{v(t['days_after_ead_start'])} days ({v(t['band'])}) {tag(t['band'])} | {cell(t['factor'])} | "
-                 f"{v(lv['factor']):g} assumed, not checked {tag(lv['factor'])} | {votes} | "
-                 f"{sc['composite']:.3f} [record] | {sc['machine_recommendation']} [record] | "
-                 f"{cell(e['decision']['shown'])} | {cell(e['decision']['next_action'])} |")
+                 f"{live} | {g4s} | {votes} | "
+                 f"{sc['composite']:.3f} [record] | {rec} [record] | "
+                 f"{cell(e['decision']['shown'])} | {action} |")
     o.append("")
 
     o.append("## Audit trace per scored role\n")
@@ -683,6 +846,17 @@ def render_report(log: dict) -> str:
         sc = v(e["scorer"])
         o.append(f"- **{sc['role_id']}** — `{sc['trace']['arithmetic']}` → {sc['machine_recommendation']}: {sc['reason']}")
     o.append("")
+
+    g4 = log["g4_overrides"]
+    o.append("## Human evidence for Apply (G4)\n")
+    o.append(f"{cell(g4['note'])} Entries in the overrides file: {cell(g4['entries_in_file'])}.\n")
+    if not g4["results"]:
+        o.append("No entries. No real labor-filing check has been done for this list, so no opening can be Apply. "
+                 "Writing evidence here without doing the check would be an invented record.\n")
+    for g in g4["results"]:
+        o.append(f"- **{g['result']['value']}** {tag(g['result'])} — {g['result']['message']}")
+    if g4["results"]:
+        o.append("")
 
     o.append("## Name matches a person must confirm (G1)\n")
     o.append("Exact name matching can attach a namesake. Confirm each matched row is the company you mean.\n")
@@ -760,7 +934,7 @@ def render_report(log: dict) -> str:
 
 def parse_args(argv):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    for k in ("persona", "roles", "crosswalk", "mappings", "csv", "bls"):
+    for k in ("persona", "roles", "overrides", "crosswalk", "mappings", "csv", "bls"):
         ap.add_argument(f"--{k}", type=Path, default=DEFAULTS[k])
     ap.add_argument("--out-dir", dest="out_dir", type=Path, default=DEFAULTS["out_dir"])
     a = ap.parse_args(argv)
@@ -780,7 +954,8 @@ def main(argv=None) -> int:
         return 3
     s = res["log"]["summary"]
     print(f"✓ {v(s['roles_in'])} roles · scored {v(s['roles_scored'])} · not scored {v(s['roles_not_scored'])} · "
-          f"scorer {v(s['by_scorer_recommendation'])} · next actions {v(s['by_next_action'])}")
+          f"scorer {v(s['by_scorer_recommendation'])} · final {v(s['by_final_recommendation'])} · "
+          f"G4 accepted {v(s['g4_accepted'])} refused {v(s['g4_refused'])} · next actions {v(s['by_next_action'])}")
     print(f"  report {rel(res['report_path'])}\n  log    {rel(res['log_path'])}")
     return 0
 

@@ -14,7 +14,7 @@ promoted_to: null
 
 **Why read it.** It shows how to run the tool and its tests, and it lists every definition the student still has to approve before the results mean anything.
 
-**What it does and doesn't decide.** It never says a company "does not sponsor". Missing data is reported as unknown. It never marks an opening ready to apply until a person has confirmed the posting is still live. With today's definitions no opening can reach a plain "Apply": the data has no filing years, so the strongest sponsorship level it supports is "likely". The date arithmetic is for planning and is not immigration advice.
+**What it does and doesn't decide.** It never says a company "does not sponsor". Missing data is reported as unknown, and the suggested step is to talk to the company. Only one path leads to "Apply": a person checks the public labor-filing (LCA) records and the live posting, then writes the evidence into an overrides file. The tool refuses an incomplete or disallowed entry. The sample ships with that file empty, because no real check has been done. An LCA is evidence of an intent to file, not an approved visa. The date arithmetic is for planning and is not immigration advice.
 
 ## Run (from the repo root)
 
@@ -22,7 +22,7 @@ promoted_to: null
 python3 scripts/contrib/2026fa/tushar-patel28-swe-title-sponsor-opt/title_sponsor_opt.py
 ```
 
-Defaults: the fictional persona and candidate roles in `sample/`, `crosswalk.json`, `mappings.json`, the 80 Days CSV, and the BLS compact table. Output goes to `course/2026fa/submissions/tushar-patel28/runs/`:
+Defaults: the fictional persona, candidate roles and (empty) G4 overrides in `sample/`, `crosswalk.json`, `mappings.json`, the 80 Days CSV, and the BLS compact table. Output goes to `course/2026fa/submissions/tushar-patel28/runs/`:
 
 | File | For | What |
 |---|---|---|
@@ -31,7 +31,7 @@ Defaults: the fictional persona and candidate roles in `sample/`, `crosswalk.jso
 | `swe-title-sponsor-opt-<date>.json` | agents | every input, gate result, label, and the scorer trace |
 | `swe-title-sponsor-opt-<date>.md` | human | executive summary, decision table, next action per role, BLS wage context |
 
-Every input path can be overridden: `--persona --roles --crosswalk --mappings --csv --bls --out-dir`. Exit codes: `0` ok (per-role input errors are reported, not fatal), `2` bad inputs/config, `3` scorer failed or a guard tripped.
+Every input path can be overridden: `--persona --roles --overrides --crosswalk --mappings --csv --bls --out-dir`. Exit codes: `0` ok (per-role input errors are reported, not fatal), `2` bad inputs/config, `3` scorer failed or a guard tripped.
 
 ## Test (from the repo root)
 
@@ -39,9 +39,12 @@ Every input path can be overridden: `--persona --roles --crosswalk --mappings --
 python3 -m unittest discover -s scripts/contrib/2026fa/tushar-patel28-swe-title-sponsor-opt/tests -v
 ```
 
-The suite is offline. Every end-to-end test runs the real scorer CLI into a temp dir. It covers:
+The suite is offline: 40 tests. Every end-to-end test runs the real scorer CLI into a temp dir. It covers:
 - one test per failure case F1–F6 from the change brief;
-- one deliberate break per gate: G1 near-miss/namesake/ambiguous, G2 band edges and bad dates, G3 an input that claims liveness was checked;
+- one deliberate break per gate: G1 near-miss/namesake/ambiguous; G2 every band edge (−31/−30, −1/0, 60/61, 90/91) and bad dates; G3 an input that claims liveness was checked;
+- G4: every refusal case, plus one fictional fixture entry that the real scorer turns into Apply;
+- the next-action rule;
+- the crosswalk principles: ambiguous titles map to no family, exclusions win, clear titles map, and the known P1 limitation;
 - a labels check over the whole agent log;
 - three `BROKEN-*` mutant scorers that must each be rejected by a guard.
 
@@ -50,9 +53,10 @@ The suite is offline. Every end-to-end test runs the real scorer CLI into a temp
 | Path | Label | Role |
 |---|---|---|
 | `title_sponsor_opt.py` | — | the one-command pipeline |
-| `crosswalk.json` | your-input | title keywords → SWE / AI / Cloud (`[TODO: DEFINE]` in the recipe) |
-| `mappings.json` | your-input | evidence → tier/p, fit p, timeline bands, liveness assumption, next-action rule |
+| `crosswalk.json` | your-input | title keywords → SWE / AI / Cloud, plus exclusions (closed DEFINE; rationale drafted by tushar-patel28, 2026-10-01) |
+| `mappings.json` | your-input | evidence → tier/p, fit p, timeline bands, next-action rule (closed DEFINEs, rationale drafted by tushar-patel28, 2026-10-01); liveness assumption; G4 contract |
 | `sample/persona.json`, `sample/candidate-roles.json` | your-input | fictional persona; real company names, fictional postings |
+| `sample/overrides.json` | your-input | G4 human evidence, the only path to Apply. **Ships empty**: no real DOL check has been done. |
 | `fixtures/` | — | test fixtures and mutant scorers (see `fixtures/README.md`) |
 | `tests/test_title_sponsor_opt.py` | — | unittest suite |
 
@@ -81,4 +85,4 @@ node scripts/contrib/2026fa/tushar-patel28-swe-title-sponsor-opt/fixtures/BROKEN
 → sponsorship weight 0 · biotech-data Skip
 ```
 
-This tool never passes `--profile`. It also refuses to run if `--profile` ever appears in the scorer command, and it fails (exit 3) if any sponsorship term in the scorer output has weight 0. The scorer itself isn't patched here.
+This tool never passes `--profile`. (Apply comes only through G4 overrides, which the scorer honours without a profile.) It also refuses to run if `--profile` ever appears in the scorer command, and it fails (exit 3) if any sponsorship term in the scorer output has weight 0. The scorer itself isn't patched here.

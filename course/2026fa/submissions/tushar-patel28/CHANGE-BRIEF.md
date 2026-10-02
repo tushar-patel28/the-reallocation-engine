@@ -77,3 +77,21 @@ It labels every input and runs the repo's existing scorer. It stops at a human g
 ## Revisions
 
 *(Append dated entries here. Don't edit the sections above.)*
+
+### 2026-10-01 — after the first build and review
+
+**Prediction outcomes (first build, sample run 2026-10-01; 12 roles, 11 scored):**
+
+- **P1 — partly confirmed, partly contradicted.** Anyscale's AI role came back "not in top titles": its list is only "Software Engineer" and "Solutions Architect". But Datadog's Cloud role did the same. Across all 1,557 sponsoring companies, Cloud titles are rarer in top-title lists than AI titles (SWE 539, AI 193, Cloud 88), so Cloud is more exposed than AI. Whether any of these unknowns is *false* cannot be checked with this data.
+- **P2 — the outcome partly confirmed, the mechanism contradicted.** "Google" came back not-found, but not because of a legal-name mismatch. No CSV row starts with "GOOGLE", since the dataset is built from startup funding filings; "ALPHABET INC" is present with no H-1B trace. Large companies that are in the CSV matched (Stripe, Databricks, Datadog, MongoDB, Toast). The naming problem appeared as ambiguity instead: "Salesforce.com, Inc." matches two rows that differ only in punctuation.
+- **P3 — confirmed (3 of 11 skipped, 27%).** The cause was mostly the mapping, not the sample. "Likely" and "Possible" are soft tiers in the scorer, so strong roles landed in Consider, and unknown roles landed in its 0.20–0.30 Consider band on fit alone.
+- **P4 — confirmed for my list, not across the dataset.** All four SWE companies with an H-1B trace listed an SWE title, so the check does not separate well-known tech targets. Across the dataset, an SWE title appears at only 539 of 1,557 sponsoring companies (35%).
+
+**Design changes and why:**
+
+- **G4 human gate: the only path to Apply.** The first build could never produce Apply: the data has no filing year, so the best tier is Likely, which the scorer treats as soft. Rather than inflate a number, Apply now requires a human-filled overrides entry. The entry records the LCA evidence source, fiscal year, SOC code, whether the posting rules out sponsorship, the liveness-check date, the check date, and a reason. The tool refuses incomplete entries, and entries for roles with a closed timeline gate or an ambiguous or not-found company match. An LCA is evidence of an intent to file, not an approved visa. The sample ships with no entries, because no real DOL check has been done.
+- **Early-start soft band.** A start 1–30 days before the EAD start is now 0.5 instead of 0, because the start date can be negotiated to on or after the EAD start. More than 30 days early stays 0. This changes failure case F3: only a start more than 30 days early (or more than 90 days after) is gated.
+- **0.6 → 0.5 for the 61–90-day band.** The scorer flags a timeline as weak only when it is *below* 0.6 (`softTimeline = timeline < 0.6`), so the first build's 0.6 was silently treated as healthy. 0.5 puts both risk bands below that threshold, so both are flagged.
+- **Next action follows the evidence tier.** Likely → tailor; Unknown (and Possible) → network, because a conversation resolves sponsorship policy and an application can't, and unknown is not no; gated → skip; the two "blocked" outcomes stay.
+
+**Who wrote the closures:** the DEFINE rationales (sponsorship tiers, fit, timeline bands, next action) were drafted by Claude and approved by tushar-patel28 on 2026-10-01. At the author's request they are labelled in the recipe, mappings and card as "rationale drafted by tushar-patel28, 2026-10-01". The crosswalk DEFINE is still open.
