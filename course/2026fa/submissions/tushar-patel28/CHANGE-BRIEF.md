@@ -1,0 +1,79 @@
+# CHANGE-BRIEF: SWE/AI/Cloud sponsored-title check with an OPT-start timeline gate
+
+**Author:** tushar-patel28 · **Written:** 2026-10-01, before any build work
+**Recipe slug:** `tushar-patel28-swe-title-sponsor-opt`
+**Drafting note:** Claude drafted this brief from a read-only recon of the repo. Predictions P1–P3 are Claude's; P4 is mine. Any later change is added under *Revisions*. The original text is never rewritten.
+
+## Executive summary
+
+For an international MS software-engineering student who graduates in December and whose OPT starts in January, this recipe answers two questions per target role:
+
+1. Does the company's H-1B record list a sponsored title in my role family (Software, then AI, then Cloud)?
+2. Does the role's start date fit the student's OPT window?
+
+It labels every input and runs the repo's existing scorer. It stops at a human gate before anything is marked Apply.
+
+## 1. Situation and engine layers
+
+**Who:** An international MS software-engineering student (a STEM degree), F-1, graduating in December with OPT starting in January. Targeting full-time roles that sponsor H-1B, in priority order: Software Engineer/Developer, AI Engineer, Cloud/Infrastructure.
+
+**Why this differs from generic advice:** the student applies *before* the unemployment clock starts. So the timeline question is "does the start date land inside the student's window," not "how many days has the student burned."
+
+**Engine layers used:**
+
+- **80 Days to Stay:** company-level H-1B fields, including `top_job_titles_sponsored`.
+- **The Cognitive Pivot:** BLS median wage per occupation family. It appears as report context only, not as a vote.
+- **The scorer:** `scripts/score/role-scorer.mjs`.
+- **Job-Ops** (liveness) is used only as a human gate (§3). The offline prototype does not call it.
+
+## 2. Reuse and proposed additions
+
+**Reused, with exact paths:**
+
+| What | Path |
+|---|---|
+| Sponsorship data (30,369 rows; 1,557 with H-1B fields) | `data/80-days-to-stay/80-days-csv/mapped_student_employment_targets_v3.csv` |
+| BLS occupations (15-1252, 15-2051, 15-1221, 15-1241, 15-1244 confirmed present) | `data/bls/compact/soc_occupation_compact.csv` |
+| Scorer, run as a CLI (it has no exports) | `npm run score -- <roles.json> --out-dir <my folder>` |
+| Parsing approach for the stringified title list (`ast.literal_eval`) | as in `scripts/sec/validate-h1b-join-sample.py` |
+| Liveness check (human-run, at the gate) | `npm run ats:liveness -- <job-url>` |
+
+**Proposed additions** (not in the repo today):
+
+- **Title-to-family crosswalk** `[TODO: DEFINE]`. This is a keyword list mapping sponsored job titles to my three role families. It's needed because the data has **no SOC field**: the repo's own entity-resolution audit says so, and so does `recipes/cases/2026su/case-ml-sponsorship-triage.md`. The crosswalk is my definition, labelled `your-input`, not a record.
+- **Timeline factor from dates** `[TODO: DEV]`. No script in `scripts/` computes the scorer's `timeline.factor`. Today it's a hand-typed number. Mine computes it from the role's start date versus the EAD start and the 90-day unemployment allowance, using a stated mapping that is labelled `your-input`. This is planning arithmetic, not immigration advice.
+
+**Deliberately not used:**
+
+- **Form D funding.** A spot check of the shipped samples found 15/200 name matches, with only one sponsoring company. A funding vote on that sample would be close to empty.
+- **H-1B approval counts.** Every approval and denial value is even, which suggests double counting upstream. I'll treat sponsorship as present or absent, never as a size.
+
+## 3. Gates (hard stops) and what a human needs to see
+
+| Gate | Testable condition | What a human must see to clear it |
+|---|---|---|
+| G1 Entity | The company's normalized name matches exactly one CSV row | The matched row's name, city, and state, to confirm it's the same company and not a namesake |
+| G2 Timeline | The computed factor is above 0.05 (otherwise the scorer zeroes the role) | The EAD start, role start, the window arithmetic, and the mapping used |
+| G3 Liveness (human) | No role is marked Apply until `npm run ats:liveness` has been run on its URL | The liveness result for each Apply candidate. The offline prototype cannot clear this gate. |
+
+## 4. Predicted failure cases and how each will be checked
+
+| # | Failure case | Expected behaviour | Check |
+|---|---|---|---|
+| F1 | Company not in the CSV | Status `not-found`; sponsorship tier `unknown`. **Never treated as "does not sponsor."** | Fixture role with an invented company name |
+| F2 | Company in the CSV but its H-1B fields are empty | Status `no-h1b-trace`; tier `unknown`, not zero | Fixture using one of the 28,812 rows without H-1B data |
+| F3 | Role start before the EAD start, or after the 90-day window closes | Timeline factor 0 → scorer Skips with a "gated" reason | Two fixture roles, one on each side of the window |
+| F4 | Missing or invalid start date | Clear error naming the role; no default value is invented | Fixture role with no start date |
+| F5 | Unparseable `top_job_titles_sponsored` | Status `titles-unreadable`; no family match is claimed | Fixture row with a malformed list |
+| F6 | Scorer `--profile` bug: "work authorized" in an F-1 profile sets the sponsorship weight to 0 | Prototype never passes `--profile`. A guard test fails if the sponsorship weight in the output is 0. | Guard test, plus a documented reproduction |
+
+## 5. Predictions about what the first pass will get wrong
+
+- **P1 (Claude):** AI-family roles will show as "family not in top titles" for companies that do sponsor AI engineers, because they file them under "Software Engineer" and the list holds only a few titles. I expect false "unknowns" for the AI family more than for the other two.
+- **P2 (Claude):** Exact name matching will miss well-known sponsors whose CSV name differs from how a posting names them (for example "Google" vs. the legal entity). Big companies may come back `not-found` more often than small ones.
+- **P3 (Claude):** The healthy-run target (skip at least half) may not be met on a small hand-made sample. A low skip rate would say more about my sample than about the recipe.
+- **P4 (Tushar):** I think SWE will match almost every sponsoring company, so the check won't actually separate companies.
+
+## Revisions
+
+*(Append dated entries here. Don't edit the sections above.)*
