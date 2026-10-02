@@ -1,0 +1,53 @@
+{
+  "_label": "your-input",
+  "_status": "[TODO: DEFINE] in the recipe — proposed by Claude on 2026-10-01, not yet closed by the human",
+  "_what": "Keyword crosswalk from sponsored job titles to three role families. The sponsorship data has no SOC field, so this file IS the definition of 'a title in this family'. It is not a record.",
+  "_match_rule": "A title belongs to a family when any of the family's regex patterns matches it (case-insensitive, Python re.search). A title can belong to more than one family. A title that matches no pattern belongs to no family (e.g. a bare 'Senior Engineer').",
+  "_context_soc_codes": "SOC codes per family are used ONLY to look up BLS median wages as report context. They are not used to match titles and do not enter the score.",
+  "families": {
+    "SWE": {
+      "patterns": [
+        "\\bsoftware (development )?engineer",
+        "\\bsoftware developer",
+        "\\bback[- ]?end\\b",
+        "\\bfront[- ]?end\\b",
+        "\\bfull[- ]?stack\\b",
+        "\\bmobile engineer",
+        "\\bapplication developer",
+        "\\bmember of technical staff\\b",
+        "\\bsde\\b"
+      ],
+      "context_soc_codes": ["15-1252.00"]
+    },
+    "AI": {
+      "patterns": [
+        "\\bmachine learning\\b",
+        "\\bml\\b",
+        "\\bai\\b",
+        "\\bartificial intelligence\\b",
+        "\\bdeep learning\\b",
+        "\\bapplied scientist\\b",
+        "\\bresearch scientist\\b",
+        "\\bnlp\\b",
+        "\\bcomputer vision\\b",
+        "\\bdata scientist\\b"
+      ],
+      "context_soc_codes": ["15-1221.00", "15-2051.00"]
+    },
+    "Cloud": {
+      "patterns": [
+        "\\bcloud\\b",
+        "\\bdevops\\b",
+        "\\bsite reliability\\b",
+        "\\bsre\\b",
+        "\\binfrastructure\\b",
+        "\\bplatform engineer",
+        "\\breliability engineer",
+        "\\bnetwork engineer",
+        "\\bsystems administrator\\b",
+        "\\bkubernetes\\b"
+      ],
+      "context_soc_codes": ["15-1241.00", "15-1244.00", "15-1299.08"]
+    }
+  }
+}
