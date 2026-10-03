@@ -472,6 +472,16 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
 - **Who:** Claude-chat introduced it. Claude Code rejected it.
 - **Trace:** [Tushar's account]. No file or commit in this repo mentions it. [Tushar's account]: that prompt's work ran on 2026-10-02.
 
+#### E25 · A PR opened earlier than intended
+- **Tried:** Viewing the compare page on 2026-10-02 to check the branch could merge, planning to open the PR only after final review.
+- **Expected:** No PR until the end.
+- **What happened:** PR #5 was created that day with the blank template. It was still open when the branch was re-cut, and it was only noticed on 2026-10-03.
+- **Checked:** The PR timeline (review request at creation, then the force-push event).
+- **Response:** Kept #5 (one PR per student), updated its title and description, disclosed the exposure in the PR, and emailed the professor.
+- **Learned:** Check whether a PR already exists before rewriting a pushed branch's history.
+- **Who:** Tushar.
+- **Trace:** PR #5 timeline; E21.
+
 ## Human / AI contributions
 
 | # | Contribution | From | Outcome | Decided by | Trace |
