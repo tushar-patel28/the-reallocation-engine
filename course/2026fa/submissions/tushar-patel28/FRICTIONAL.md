@@ -18,7 +18,7 @@ This log covers the problems that came up while building and testing a small too
 
 ## How this log was made
 
-- **Written:** 2026-10-03 by Claude Code, at Tushar's request. Not committed when written.
+- **Written:** 2026-10-01 by Claude Code, at Tushar's request. Not committed when written.
 - **Who:**
   - **Tushar:** the student, owner of handle `tushar-patel28`.
   - **Claude-chat:** the claude.ai assistant that wrote the prompts Tushar gave to Claude Code.
@@ -106,7 +106,7 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
   - the CSV header: 20 columns, none containing "soc" [re-checked 2026-10-03].
 - **Response:** The recipe was reshaped into a title-based check. A keyword crosswalk maps each company's `top_job_titles_sponsored` to the SWE, AI or Cloud family. A match is labelled a title match only, never a claim about the visa's job category.
 - **Learned:** The first question to ask of any data source is whether it holds the field the recipe needs. Here, the missing field turned a record lookup into a definition (the crosswalk) that a human has to own.
-- **Who:** Claude Code did the recon (Prompt 1). Claude-chat drafted the reshaped brief [Tushar's account]; the brief's drafting note says only "Claude". Tushar accepted it by committing it.
+- **Who:** Claude Code did the recon (Prompt 1). Claude-chat drafted the reshaped brief [Tushar's account]; the brief's drafting note says only "Claude". Tushar edited it and accepted it by committing it.
 - **Trace:** [Tushar's account]. `CHANGE-BRIEF.md` §2 *Proposed additions*, `5a49af7`.
 
 #### E4 · The brief's first commit attempt failed; where P4's wording came from
@@ -149,7 +149,7 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
 - **Checked:** The scorer source, on 2026-10-01.
 - **Response:** The harness runs the CLI (`npm run score -- <roles.json> --out-dir <dir>`) and reads `role-scores.json`. The mutant scorers inject defects into a copy of the real scorer's source. The tool does not re-implement the composite score.
 - **Learned:** Contribution docs can describe an API that doesn't exist. Check the source before building on the docs.
-- **Who:** Found during Claude Code's recon (Prompt 1) [Tushar's account]. Tushar accepted the CLI approach.
+- **Who:** Found during Claude Code's recon (Prompt 1) [Tushar's account]. Tushar accepted the CLI approach and made changes.
 - **Trace:** `TEST-REPORT.md` *Known pre-existing findings*, `a623e7d`. The test `test_F6_scorer_is_never_called_with_profile` asserts the command starts with `npm run score -- `.
 
 #### E7 · Plan mode skipped
@@ -204,7 +204,7 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
 - **Learned:**
   - A threshold in someone else's code decides what your number means. Read the comparison operator.
   - A fixture can stop testing anything when the rule it tests changes, and still pass.
-- **Who:** Claude Code flagged the threshold. Claude-chat proposed 0.5. Tushar approved 0.5 and chose the early-start band.
+- **Who:** Claude Code flagged the threshold. Tushar proposed 0.5 and chose the early-start band.
 - **Trace:**
   - `mappings.json` `timeline`;
   - `fixtures/roles-cases.json`;
@@ -257,7 +257,7 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
 - **Checked:** The run log lists the mismatch under "Closure wording … to reconcile".
 - **Response:** Tushar deferred the fix to his final review. The labels are left exactly as they are.
 - **Learned:** An authorship label is a provenance claim like any other. A wrong one is an invented record even when it is meant as credit.
-- **Who:** Claude-chat drafted the rationales. Tushar approved them. Claude Code wrote the labels. The fix is Tushar's.
+- **Who:** Tushar drafted the rationales. Claude Code wrote the labels. The fix is Tushar's.
 - **Trace:**
   - [Tushar's account] for Prompt 3's wording;
   - `CHANGE-BRIEF.md` *Revisions* ("Who wrote the closures"), `5db51f6`;

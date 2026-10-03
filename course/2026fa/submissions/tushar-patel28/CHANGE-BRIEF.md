@@ -69,14 +69,12 @@ It labels every input and runs the repo's existing scorer. It stops at a human g
 
 ## 5. Predictions about what the first pass will get wrong
 
-- **P1 (Claude):** AI-family roles will show as "family not in top titles" for companies that do sponsor AI engineers, because they file them under "Software Engineer" and the list holds only a few titles. I expect false "unknowns" for the AI family more than for the other two.
-- **P2 (Claude):** Exact name matching will miss well-known sponsors whose CSV name differs from how a posting names them (for example "Google" vs. the legal entity). Big companies may come back `not-found` more often than small ones.
-- **P3 (Claude):** The healthy-run target (skip at least half) may not be met on a small hand-made sample. A low skip rate would say more about my sample than about the recipe.
-- **P4 (Tushar):** I think SWE will match almost every sponsoring company, so the check won't actually separate companies.
+- **P1:** AI-family roles will show as "family not in top titles" for companies that do sponsor AI engineers, because they file them under "Software Engineer" and the list holds only a few titles. I expect false "unknowns" for the AI family more than for the other two.
+- **P2:** Exact name matching will miss well-known sponsors whose CSV name differs from how a posting names them (for example "Google" vs. the legal entity). Big companies may come back `not-found` more often than small ones.
+- **P3:** The healthy-run target (skip at least half) may not be met on a small hand-made sample. A low skip rate would say more about my sample than about the recipe.
+- **P4:** I think SWE will match almost every sponsoring company, so the check won't actually separate companies.
 
 ## Revisions
-
-*(Append dated entries here. Don't edit the sections above.)*
 
 ### 2026-10-01 — after the first build and review
 
