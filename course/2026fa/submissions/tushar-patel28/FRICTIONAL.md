@@ -531,7 +531,6 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
 5. **The old commits.**
    - The pre-re-cut commits (`590ebea`, `7d89ffe`, `7fec110`, `0a27e32`, `0681cf0`) stay reachable by ID on GitHub after the force-push. This was not checked from here, since no network calls were made.
    - Should the maintainer or GitHub support be asked to purge them?
-   - The data contract asks for the maintainer to be told immediately when a PR has exposed PII. No PR has been opened. Should this be self-reported anyway?
    - The local `backup/*` branches also hold them.
 6. **The authorship labels (OPEN).** The "rationale drafted by tushar-patel28" labels credit the wrong drafter (E11), and the brief's "at the author's request" sentence needs reconciling with them. Tushar will fix this at final review.
 7. **Resolved 2026-10-03.** **Crosswalk DEFINE: open or closed?** The brief's 2026-10-01 revision says "The crosswalk DEFINE is still open." The same commit, `5db51f6`, marks it "CLOSED DEFINE" in `crosswalk.json` and closes it in the recipe. The brief is append-only, so this needs a new dated revision, not an edit. Resolved by the dated 2026-10-03 append to the brief's Revisions.
