@@ -188,6 +188,7 @@ Each closure gives the value and one or more sentences of reasoning, in the reci
   - **Added:** the exclusion list; `ai/ml|ai/ds engineer`; `<engineer> … machine learning|ml|ai` and `<engineer> … cloud|infrastructure|devops` (within 25 characters, e.g. "Software Engineer, Machine Learning", "Senior Software Engineer, Cloud"); `<engineer|developer> – back-end|front-end|full-stack`; `systems|database reliability engineer`; `applications? developer`.
   - **Effect on companies with sponsorship data** (1,557): a family title appears at SWE 511 (was 539), AI 86 (was 193), Cloud 68 (was 88); no family 967 (was 851). The AI drop is mostly data-scientist and research-scientist titles.
   - 15-2051 (Data Scientists) stays in the AI *wage context* only, as the AI-adjacent code named in the brief.
+    - [model-judgment] BLS has no AI-engineer occupation; 15-2051 is listed because some employers file AI roles under it, not because the crosswalk maps data-scientist titles to AI.
 
 ## Open items and proposed additions
 
@@ -336,8 +337,10 @@ All outputs are written to `course/2026fa/submissions/tushar-patel28/runs/`:
 > `SNICKERDOODLE.md` line 75 — "A &#91;`TODO`] without evidence of closure is still open, whatever the text says."
 >
 > `course/summer-2026/reallocation-engine-mode-build.md` line 71 — "- **Proposed additions** — any new data sources or commands, each with a justification for why it belongs, marked with a typed &#91;`TODO`]."
+>
+> Fall 2026 Canvas assignment, "The Reallocation Engine — Recipe Design Assignment", §2 *Build It* — "Proposed additions, each justified and marked &#91;TODO: DEV] or &#91;TODO: DATA SOURCE]"
 
-That last quote is the only assignment text in the repository; it's the Summer 2026 brief, and no Fall 2026 assignment file exists here. Both open items in this recipe are proposed additions marked &#91;`TODO: DEV`]: the liveness record for roles without a G4 entry, and the company alias table. The assignment requires them to stay marked until built, and line 75 counts them as open, so line 58 can't be met. `todos_open: 2`.
+The Summer 2026 brief is the only assignment text in the repository. The governing Fall 2026 assignment is on Canvas and says the same in §2: proposals stay marked as typed TODOs. Both open items in this recipe are proposed additions marked &#91;`TODO: DEV`]: the liveness record for roles without a G4 entry, and the company alias table. The assignment requires them to stay marked until built, and line 75 counts them as open, so line 58 can't be met. `todos_open: 2`.
 
 **(b) RUNNABLE-SAMPLE needs a RUN_LOG entry, but students must never edit `logs/RUN_LOG.md`.**
 

@@ -462,15 +462,15 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
 - **Who:** Tushar.
 - **Trace:** [Tushar's account], which dates it 2026-10-02, after the clean-checkout run. No repo record.
 
-#### E24 · A stray "ImageMobject" reference (day not recorded)
-- **Tried:** One of Claude-chat's prompts asked for a log entry about "ImageMobject", a leftover from an unrelated project.
+#### E24 · A stray "ImageMobject" reference
+- **Tried:** Claude-chat's prompt for the domain justification and worked run asked for a log entry about "ImageMobject", a leftover from an unrelated project.
 - **Expected:** (From the prompt.) That there was such an event to record.
 - **What happened:** Claude Code found no such event in this repo.
 - **Checked:** The repo.
 - **Response:** Claude Code declined to invent an entry.
 - **Learned:** Prompts written in one chat can carry context from another. The agent must check a prompt's claims against the repo, not simply carry them out.
 - **Who:** Claude-chat introduced it. Claude Code rejected it.
-- **Trace:** [Tushar's account]. No file or commit in this repo mentions it.
+- **Trace:** [Tushar's account]. No file or commit in this repo mentions it. [Tushar's account]: that prompt's work ran on 2026-10-02.
 
 ## Human / AI contributions
 
@@ -496,7 +496,7 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
 | 18 | "ImageMobject" entry | Claude-chat prompt | rejected | Claude Code | E24 |
 | 19 | Treat the build spec as the approved plan (plan mode skipped) | Claude Code | not approved by anyone; a process deviation | — | E7 |
 | 20 | G1 review sheet and `[model-judgment]` notes | Claude (`5db51f6`) | accepted; signed off, Salesforce pick left blank | Tushar | E12 · `55ca2f4` |
-| 21 | Keep DRAFT; cite the two rule conflicts | Claude (`5db51f6`) | accepted | Tushar (committed) | E15 |
+| 21 | Keep DRAFT; cite the two rule conflicts (Fall 2026 Canvas citation added 2026-10-03) | Claude (`5db51f6`) | accepted | Tushar (committed) | E15 |
 | 22 | Do not tune toward the skip-rate target | Claude-chat (build prompt, Prompt 2) | accepted; followed by Claude Code | Tushar | E14 |
 | 23 | Break-attempt prediction | Tushar | confirmed (12 of 12 rows) | — | E19 · `a623e7d` |
 | 24 | Hand-check conclusions | Tushar | confirmed (3 of 3 rows) | — | E18 · `ff13a62` |
@@ -506,6 +506,9 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
 | 28 | Doctor findings (template-comment status line, unchanged recipe count) | Claude-chat noticed; Claude Code wrote them up | accepted | Tushar | E16 · `a623e7d` |
 | 29 | Third-person privacy rule for the new documents | Claude-chat | accepted | Tushar | E21 |
 | 30 | Re-cut the branch (two passes; second pass requested by Claude-chat) | Claude-chat recommended; Claude Code ran both passes | accepted; Tushar ran the force-push | Tushar | E21 · `6928729` |
+| 31 | Brief clarification: the crosswalk DEFINE closed in `5db51f6` (resolves question 7) | final-review prompt (Claude-chat) | accepted | Tushar | `CHANGE-BRIEF.md` *Revisions*, 2026-10-03 |
+| 32 | Fall 2026 Canvas assignment citation in lifecycle conflict (a) | final-review prompt (Claude-chat) | accepted | Tushar | E15 · recipe *Lifecycle status* |
+| 33 | 15-2051 `[model-judgment]` note on the AI wage context | final-review prompt (Claude-chat) | accepted | Tushar | recipe *Definitions (closed)*, crosswalk |
 
 **Commit trailers undercount AI work.** A `Co-Authored-By: Claude` trailer appears on 3 of 7 commits (`5db51f6`, `6928729`, `ff13a62`). It is absent from `cce6c00`, although the worked run records a Claude build session on 2026-10-01, and from `5a49af7`, which the brief says Claude drafted [re-checked 2026-10-03]. Use this table and the entries, not the trailers, as the record of who did what.
 
@@ -521,7 +524,7 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
    - The data contract asks for the maintainer to be told immediately when a PR has exposed PII. No PR has been opened. Should this be self-reported anyway?
    - The local `backup/*` branches also hold them.
 6. **The authorship labels (OPEN).** The "rationale drafted by tushar-patel28" labels credit the wrong drafter (E11), and the brief's "at the author's request" sentence needs reconciling with them. Tushar will fix this at final review.
-7. **Crosswalk DEFINE: open or closed?** The brief's 2026-10-01 revision says "The crosswalk DEFINE is still open." The same commit, `5db51f6`, marks it "CLOSED DEFINE" in `crosswalk.json` and closes it in the recipe. The brief is append-only, so this needs a new dated revision, not an edit. To be resolved by a dated append to the brief's Revisions during final review.
+7. **Resolved 2026-10-03.** **Crosswalk DEFINE: open or closed?** The brief's 2026-10-01 revision says "The crosswalk DEFINE is still open." The same commit, `5db51f6`, marks it "CLOSED DEFINE" in `crosswalk.json` and closes it in the recipe. The brief is append-only, so this needs a new dated revision, not an edit. Resolved by the dated 2026-10-03 append to the brief's Revisions.
 8. **Salesforce.** Which row is the company? And when will the company alias table exist so the tool can accept the choice (E12)?
 9. **Skip rate 2 of 11.** Is the low skip rate a property of the soft-tier mapping, or of a hand-picked sample? Only a larger, unpicked role list would tell.
 10. **Stale hash.** Should the 2026-10-01 sample run be re-generated so its recorded `mappings.json` hash matches the file, or is the disclosure enough?

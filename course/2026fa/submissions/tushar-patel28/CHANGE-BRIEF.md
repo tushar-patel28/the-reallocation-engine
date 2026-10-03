@@ -97,3 +97,5 @@ It labels every input and runs the repo's existing scorer. It stops at a human g
 **Who wrote the closures:** the DEFINE rationales (sponsorship tiers, fit, timeline bands, next action) were drafted by Claude and approved by tushar-patel28 on 2026-10-01. At the author's request they are labelled in the recipe, mappings and card as "rationale drafted by tushar-patel28, 2026-10-01". The crosswalk DEFINE is still open.
 
 2026-10-02 privacy re-cut: lines 12, 18 and 20 reworded to third person and the school name removed; no prediction content changed.
+
+2026-10-03 clarification: the crosswalk DEFINE, described as still open in the 2026-10-01 revision, was closed later that day in the same commit (5db51f6). Its closure rationale and label are part of the open authorship-label item recorded in FRICTIONAL E11.
