@@ -245,7 +245,7 @@ One machine warning went the other way: the manifest check's W2 warning is a fal
   - tests `test_ambiguous_titles_map_to_no_family`, `test_non_ic_and_non_family_roles_map_to_no_family`, `test_clear_titles_map_to_their_families`;
   - `worked-run.md` *Corrections*.
 
-#### E11 · The authorship label error (OPEN)
+#### E11 · The authorship label error (FIXED 2026-10-03)
 - **Tried:** Recording who wrote the closures of the sponsorship-tier, fit, timeline-band and next-action definitions (and later the crosswalk).
 - **Expected:** Labels that name the drafter.
 - **What happened:**
